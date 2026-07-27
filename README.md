@@ -50,6 +50,8 @@ Livrables :
     
 - une ingestion manuelle de documents ;
     
+- une base de sécurité minimale : secrets hors du repo, sauvegarde du vector store et de l'object storage ;
+    
 - des logs structurés sur chaque requête.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
     
 
@@ -70,6 +72,8 @@ Objectif : rendre le RAG **fiable**. Les feuilles de route RAG modernes insisten
 - reranker ;
     
 - stratégie de reindexation ;
+    
+- observabilité minimale : traces par requête, métriques basiques (latence, taux d'erreur, précision retrieval) ;
     
 - golden dataset de questions/réponses pour mesurer la qualité.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
     
@@ -141,7 +145,7 @@ Profils recommandés :
 
 ## Phase 5
 
-Objectif : industrialiser l’**observabilité et l’évaluation**. Les bonnes pratiques LLMOps insistent sur les traces, les évaluations automatiques, les régressions fonctionnelles, les coûts et la latence avant toute montée en complexité.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
+Objectif : industrialiser l’**observabilité et l’évaluation** initiées dès la Phase 2. Les bonnes pratiques LLMOps insistent sur les traces, les évaluations automatiques, les régressions fonctionnelles, les coûts et la latence avant toute montée en complexité.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
 
 À instrumenter :
 
@@ -282,7 +286,7 @@ Mécanisme cible :
 
 ## Phase 10
 
-Objectif : hardening et exploitation durable. À ce niveau, le projet devient une vraie plateforme homelab/plateforme privée d’IA, donc il faut traiter sauvegardes, sécurité, gouvernance et maintenance de modèles.[[institute.sfeir](https://institute.sfeir.com/en/kubernetes-training/trends-kubernetes-2026-tools-alternatives-evolutions/)]
+Objectif : finaliser le hardening et l’exploitation durable. La sécurité et les sauvegardes de base sont posées dès la Phase 1 et renforcées à chaque phase ; ici, le projet devient une vraie plateforme homelab/plateforme privée d’IA, donc il faut industrialiser gouvernance, rotation des secrets à grande échelle et maintenance de modèles.[[institute.sfeir](https://institute.sfeir.com/en/kubernetes-training/trends-kubernetes-2026-tools-alternatives-evolutions/)]
 
 À couvrir :
 
@@ -307,21 +311,23 @@ Je te conseille cet ordre concret :
 
 1. Architecture logique et profils.
     
-2. MVP Compose avec vLLM unique.
+2. MVP Compose avec vLLM unique (sécurité et sauvegardes minimales dès le départ).
     
-3. RAG fiable et instrumenté.
+3. RAG fiable et instrumenté (observabilité minimale incluse).
     
 4. Orchestrateur multi-agent.
     
 5. Multi-profils vLLM + routing.
     
-6. Observabilité + évaluation.
+6. Observabilité + évaluation (industrialisation).
     
-7. Migration k3s/Kubernetes.
+7. Préparation à la migration Kubernetes.
     
-8. Burst GPU distant.
+8. Migration k3s/Kubernetes.
     
-9. Déploiement automatique de gros modèles.
+9. Burst GPU distant.
     
-10. Hardening et exploitation.[[github](https://github.com/vllm-project/production-stack/issues/855)]
+10. Déploiement automatique de gros modèles.
+    
+11. Hardening et exploitation (finalisation).[[github](https://github.com/vllm-project/production-stack/issues/855)]
     
