@@ -1,10 +1,10 @@
 # Vision cible
 
-Le but final est une plateforme où l’utilisateur parle à un **agent orchestrateur** unique, qui route vers des services spécialisés de retrieval, raisonnement, review et serving vLLM, avec déploiement de profils de modèles selon la charge et les ressources GPU disponibles. Pour y arriver sans te noyer, il faut séparer le projet en étapes qui valident chacune une couche technique précise.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
+Le but final est une plateforme où l’utilisateur parle à un **agent orchestrateur** unique, qui route vers des services spécialisés de retrieval, raisonnement, review et serving vLLM, avec déploiement de profils de modèles selon la charge et les ressources GPU disponibles. Pour y arriver sans te noyer, il faut séparer le projet en étapes qui valident chacune une couche technique précise.
 
-## [[Phase 0]]
+## Phase 0
 
-Objectif : cadrer l’architecture et les règles du jeu avant d’écrire la stack. Cette phase doit fixer les profils de modèles, les rôles d’agents, les types de documents à ingérer, les contraintes de sécurité, et les métriques minimales à suivre comme latence, TTFT, throughput, coût électrique/VRAM et qualité RAG.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
+Objectif : cadrer l’architecture et les règles du jeu avant d’écrire la stack. Cette phase doit fixer les profils de modèles, les rôles d’agents, les types de documents à ingérer, les contraintes de sécurité, et les métriques minimales à suivre comme latence, TTFT, throughput, coût électrique/VRAM et qualité RAG.
 
 À produire :
 
@@ -14,12 +14,12 @@ Objectif : cadrer l’architecture et les règles du jeu avant d’écrire la st
     
 - matrice des profils de modèles `small / medium / large / burst` ;
     
-- définition des critères de réussite du MVP.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
+- définition des critères de réussite du MVP.
     
 
 ## Phase 1
 
-Objectif : construire le **MVP local en Docker Compose**, sans Kubernetes. La littérature LLMOps recommande de commencer par un système simple mais réel, instrumenté et observable, plutôt que de sauter directement dans une plateforme complexe.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
+Objectif : construire le **MVP local en Docker Compose**, sans Kubernetes. La littérature LLMOps recommande de commencer par un système simple mais réel, instrumenté et observable, plutôt que de sauter directement dans une plateforme complexe.
 
 Stack de départ :
 
@@ -37,7 +37,7 @@ Stack de départ :
     
 - reverse proxy ;
     
-- logs et métriques de base.[[glukhov](https://www.glukhov.org/llm-hosting/vllm/vllm-quickstart/)]
+- logs et métriques de base.
     
 
 Livrables :
@@ -52,12 +52,12 @@ Livrables :
     
 - une base de sécurité minimale : secrets hors du repo, sauvegarde du vector store et de l'object storage ;
     
-- des logs structurés sur chaque requête.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
+- des logs structurés sur chaque requête.
     
 
 ## Phase 2
 
-Objectif : rendre le RAG **fiable**. Les feuilles de route RAG modernes insistent sur le fait qu’un “vector DB + prompt” ne suffit pas ; il faut penser retrieval hybride, chunking, reranking, fraîcheur des données et évaluation.[[reddit](https://www.reddit.com/r/homelab/comments/1q87u3y/a_practical_2026_roadmap_for_modern_ai_search_rag/)]
+Objectif : rendre le RAG **fiable**. Les feuilles de route RAG modernes insistent sur le fait qu’un “vector DB + prompt” ne suffit pas ; il faut penser retrieval hybride, chunking, reranking, fraîcheur des données et évaluation.
 
 À ajouter :
 
@@ -75,7 +75,7 @@ Objectif : rendre le RAG **fiable**. Les feuilles de route RAG modernes insisten
     
 - observabilité minimale : traces par requête, métriques basiques (latence, taux d'erreur, précision retrieval) ;
     
-- golden dataset de questions/réponses pour mesurer la qualité.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
+- golden dataset de questions/réponses pour mesurer la qualité.
     
 
 À valider :
@@ -86,12 +86,12 @@ Objectif : rendre le RAG **fiable**. Les feuilles de route RAG modernes insisten
     
 - réponse traçable à ses sources ;
     
-- performances acceptables avec ton corpus réel.[[datanucleus](https://datanucleus.dev/rag-and-agentic-ai/agentic-rag-enterprise-guide-2026)]
+- performances acceptables avec ton corpus réel.
     
 
 ## Phase 3
 
-Objectif : ajouter la **couche agentique hiérarchique**. Les patterns planner-executor-reviewer et les approches hiérarchiques multi-agents montrent qu’il est plus robuste de faire passer toutes les interactions utilisateur par un orchestrateur unique, qui appelle ensuite des rôles spécialisés.[[arxiv](https://arxiv.org/html/2602.21670v2)]
+Objectif : ajouter la **couche agentique hiérarchique**. Les patterns planner-executor-reviewer et les approches hiérarchiques multi-agents montrent qu’il est plus robuste de faire passer toutes les interactions utilisateur par un orchestrateur unique, qui appelle ensuite des rôles spécialisés.
 
 Architecture à viser :
 
@@ -103,7 +103,7 @@ Architecture à viser :
     
 - **LLM-D** : review/critique ;
     
-- outils non-LLM : embeddings, rerank, indexation, connecteurs.[[emergentmind](https://www.emergentmind.com/topics/planner-executor-reviewer-pipeline)]
+- outils non-LLM : embeddings, rerank, indexation, connecteurs.
     
 
 À produire :
@@ -114,12 +114,12 @@ Architecture à viser :
     
 - règles de routage ;
     
-- journal d’exécution par agent.[[arxiv](https://arxiv.org/pdf/2603.11445.pdf)]
+- journal d’exécution par agent.
     
 
 ## Phase 4
 
-Objectif : passer d’un backend unique à une **plateforme multi-profils vLLM**. vLLM ne sert pas plusieurs modèles dans une seule instance, donc ton design doit évoluer vers plusieurs services vLLM, chacun spécialisé par rôle ou par taille de modèle, avec routage par-dessus.[[discuss.vllm](https://discuss.vllm.ai/t/run-multiple-models/1181)]
+Objectif : passer d’un backend unique à une **plateforme multi-profils vLLM**. vLLM ne sert pas plusieurs modèles dans une seule instance, donc ton design doit évoluer vers plusieurs services vLLM, chacun spécialisé par rôle ou par taille de modèle, avec routage par-dessus.
 
 Profils recommandés :
 
@@ -131,7 +131,7 @@ Profils recommandés :
     
 - `vllm-large-burst` ;
     
-- éventuellement un service embeddings séparé si besoin.[[docs.vllm](https://docs.vllm.ai/en/latest/deployment/integrations/production-stack/)]
+- éventuellement un service embeddings séparé si besoin.
     
 
 À ajouter :
@@ -140,12 +140,12 @@ Profils recommandés :
     
 - registre des modèles disponibles ;
     
-- métadonnées par modèle, contexte, VRAM, latence attendue, coût.[[github](https://github.com/vllm-project/production-stack/issues/855)]
+- métadonnées par modèle, contexte, VRAM, latence attendue, coût.
     
 
 ## Phase 5
 
-Objectif : industrialiser l’**observabilité et l’évaluation** initiées dès la Phase 2. Les bonnes pratiques LLMOps insistent sur les traces, les évaluations automatiques, les régressions fonctionnelles, les coûts et la latence avant toute montée en complexité.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
+Objectif : industrialiser l’**observabilité et l’évaluation** initiées dès la Phase 2. Les bonnes pratiques LLMOps insistent sur les traces, les évaluations automatiques, les régressions fonctionnelles, les coûts et la latence avant toute montée en complexité.
 
 À instrumenter :
 
@@ -163,7 +163,7 @@ Objectif : industrialiser l’**observabilité et l’évaluation** initiées d�
     
 - score RAG sur dataset de test ;
     
-- qualité des sorties des agents.[[machinelearningmastery](https://machinelearningmastery.com/the-roadmap-for-mastering-llmops-in-2026/)]
+- qualité des sorties des agents.
     
 
 À ajouter :
@@ -176,12 +176,12 @@ Objectif : industrialiser l’**observabilité et l’évaluation** initiées d�
     
 - benchmark de modèles ;
     
-- suite d’évaluation avant changement de modèle/prompt.[[developers.redhat](https://developers.redhat.com/articles/2025/12/24/how-deploy-and-benchmark-vllm-guidellm-kubernetes)]
+- suite d’évaluation avant changement de modèle/prompt.
     
 
 ## Phase 6
 
-Objectif : préparer la **migration Kubernetes** sans tout casser. Les guides Kubernetes/vLLM récents montrent que l’intérêt réel apparaît avec GPU scheduling, autoscaling, multi-réplicas, warm pools et routage avancé.[[github](https://github.com/vllm-project/production-stack/issues/855)]
+Objectif : préparer la **migration Kubernetes** sans tout casser. Les guides Kubernetes/vLLM récents montrent que l’intérêt réel apparaît avec GPU scheduling, autoscaling, multi-réplicas, warm pools et routage avancé.
 
 Préparation technique :
 
@@ -193,7 +193,7 @@ Préparation technique :
     
 - sortir les volumes persistants clairement ;
     
-- séparer les dépendances réseaux et les secrets.[[institute.sfeir](https://institute.sfeir.com/en/kubernetes-training/trends-kubernetes-2026-tools-alternatives-evolutions/)]
+- séparer les dépendances réseaux et les secrets.
     
 
 À produire :
@@ -204,12 +204,12 @@ Préparation technique :
     
 - stratégie de probes ;
     
-- stratégie de stockage des poids et caches.[[docs.vllm](https://docs.vllm.ai/en/latest/deployment/integrations/production-stack/)]
+- stratégie de stockage des poids et caches.
     
 
 ## Phase 7
 
-Objectif : déployer la **plateforme homelab sur k3s/Kubernetes**. À ce stade, tu introduis les briques d’orchestration GPU, la discovery plus propre et les classes de services vLLM.[[markaicode](https://markaicode.com/integrate/vllm-with-kubernetes/)]
+Objectif : déployer la **plateforme homelab sur k3s/Kubernetes**. À ce stade, tu introduis les briques d’orchestration GPU, la discovery plus propre et les classes de services vLLM.
 
 Socle conseillé :
 
@@ -225,7 +225,7 @@ Socle conseillé :
     
 - déploiements vLLM par profil ;
     
-- métriques GPU et autoscaling sur métriques pertinentes.[[markaicode](https://markaicode.com/integrate/vllm-with-kubernetes/)]
+- métriques GPU et autoscaling sur métriques pertinentes.
     
 
 Résultat attendu :
@@ -236,12 +236,12 @@ Résultat attendu :
     
 - la plateforme redémarre proprement ;
     
-- les caches et index persistent.[[docs.vllm](https://docs.vllm.ai/en/latest/deployment/integrations/production-stack/)]
+- les caches et index persistent.
     
 
 ## Phase 8
 
-Objectif : introduire le **burst GPU à la demande**. Ici, tu gardes le même plan de contrôle, mais tu ajoutes des nœuds ou pools distants à activer selon besoin, sans passer par une API LLM propriétaire.[[docs.vast](https://docs.vast.ai/ollama-webui)]
+Objectif : introduire le **burst GPU à la demande**. Ici, tu gardes le même plan de contrôle, mais tu ajoutes des nœuds ou pools distants à activer selon besoin, sans passer par une API LLM propriétaire.
 
 À construire :
 
@@ -253,7 +253,7 @@ Objectif : introduire le **burst GPU à la demande**. Ici, tu gardes le même pl
     
 - téléchargement/caching des poids ;
     
-- routage vers backend distant quand un profil local manque de VRAM.[[docs.vast](https://docs.vast.ai/ollama-webui)]
+- routage vers backend distant quand un profil local manque de VRAM.
     
 
 Point de vigilance :
@@ -262,12 +262,12 @@ Point de vigilance :
     
 - la proximité stockage/compute ;
     
-- la sécurité réseau des endpoints distants.[[digitalocean](https://www.digitalocean.com/community/conceptual-articles/vllm-kubernetes-model-loading-caching-strategies)]
+- la sécurité réseau des endpoints distants.
     
 
 ## Phase 9
 
-Objectif : automatiser le **déploiement dynamique des modèles**. C’est la phase où l’orchestrateur ne choisit plus seulement un modèle déjà prêt ; il peut aussi demander le déploiement d’un profil lourd en fonction de la charge, du type de requête et des GPU disponibles.[[github](https://github.com/vllm-project/production-stack/issues/855)]
+Objectif : automatiser le **déploiement dynamique des modèles**. C’est la phase où l’orchestrateur ne choisit plus seulement un modèle déjà prêt ; il peut aussi demander le déploiement d’un profil lourd en fonction de la charge, du type de requête et des GPU disponibles.
 
 Mécanisme cible :
 
@@ -281,12 +281,12 @@ Mécanisme cible :
     
 5. il route la requête ;
     
-6. il scale down ensuite selon politique.[[docs.vllm](https://docs.vllm.ai/en/latest/deployment/integrations/production-stack/)]
+6. il scale down ensuite selon politique.
     
 
 ## Phase 10
 
-Objectif : finaliser le hardening et l’exploitation durable. La sécurité et les sauvegardes de base sont posées dès la Phase 1 et renforcées à chaque phase ; ici, le projet devient une vraie plateforme homelab/plateforme privée d’IA, donc il faut industrialiser gouvernance, rotation des secrets à grande échelle et maintenance de modèles.[[institute.sfeir](https://institute.sfeir.com/en/kubernetes-training/trends-kubernetes-2026-tools-alternatives-evolutions/)]
+Objectif : finaliser le hardening et l’exploitation durable. La sécurité et les sauvegardes de base sont posées dès la Phase 1 et renforcées à chaque phase ; ici, le projet devient une vraie plateforme homelab/plateforme privée d’IA, donc il faut industrialiser gouvernance, rotation des secrets à grande échelle et maintenance de modèles.
 
 À couvrir :
 
@@ -302,7 +302,7 @@ Objectif : finaliser le hardening et l’exploitation durable. La sécurité et 
     
 - politique de mise à jour de modèles ;
     
-- documentation d’exploitation.[[institute.sfeir](https://institute.sfeir.com/en/kubernetes-training/trends-kubernetes-2026-tools-alternatives-evolutions/)]
+- documentation d’exploitation.
     
 
 ## Ordre pratique
@@ -329,5 +329,5 @@ Je te conseille cet ordre concret :
     
 10. Déploiement automatique de gros modèles.
     
-11. Hardening et exploitation (finalisation).[[github](https://github.com/vllm-project/production-stack/issues/855)]
+11. Hardening et exploitation (finalisation).
     
