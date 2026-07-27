@@ -1,0 +1,13 @@
+- Dans l’idée de réduire la taille de mémoire nécessaire: Faire une première gen servant de données RAG ultra spécialisée avec vérification de véracité et cohérence, pas de nécessité que ce soit rapide, ensuite, génération + légère basé sur ce RAG pour l’échange IA utilisateur.
+- Ultra spécialisation de modèle (fine-tuning), LLM-chaining
+- Base de contexte dynamique, rendre des concepts immuable selon leur récurrence dans les prompt, génération, réponse utilisateur en rapport au thème concerné
+- benchmark de modèles existants selon la spécialité
+- Version « serveur » à héberger dans un VPS ou server on prem et version « locale »directement exploitable via le pc client (GPU local compatible utilisé)(conteneurisation?)
+- choix du modèle selon contexte, ressources dispo, GPU local/cloud
+- Plusieurs mode: AI assistant, RAG, Automation (n8n), Agent (action sur la machine), projet (orchestration d’ia)
+- le choix du modèle selon contexte/ressources → choix entre api (modele cloud) ou local (nos carte graphique ou alors hybride
+- version serveur + version locale conteneurisée → j'avais envie de faire ça, un peu comme n8n, ça doit se gerer facilement via des pipeline github lors du push
+- le benchmark de modèles par spécialité → j'avais en tete de l'integrer avec RAGAS par exemple
+- Meshing P2P pour les ressources GPU
+- Questionner utilisateur sur le workload pour anticiper les déploiements
+- Utilisation de vast.ai
