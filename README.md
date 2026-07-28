@@ -10,7 +10,7 @@ Objectif : cadrer l’architecture et les règles du jeu avant d’écrire la st
 
 - schéma logique des composants ;
     
-- taxonomie des rôles `LLM-A / B / C / reviewer` ;
+- taxonomie des rôles `Orchestrateur / Planning / Execution spécialisé / Review Critique` ;
     
 - matrice des profils de modèles `small / medium / large / burst` ;
     
@@ -95,13 +95,13 @@ Objectif : ajouter la **couche agentique hiérarchique**. Les patterns planner-e
 
 Architecture à viser :
 
-- **LLM-A** : interface utilisateur + orchestration ;
+- **Orchestrateur** : interface utilisateur, interprétation de la demande, retrieval RAG initial, gestion des retries ;
     
-- **LLM-B** : retrieval/planning ;
+- **Planning** : planification des étapes, choix des agents et de l'ordre d'exécution ;
     
-- **LLM-C** : exécution spécialisée ;
+- **Execution spécialisé** : exécution des tâches spécialisées ;
     
-- **LLM-D** : review/critique ;
+- **Review Critique** : review/critique des livrables, validation avant réponse finale ;
     
 - outils non-LLM : embeddings, rerank, indexation, connecteurs.
     
