@@ -22,7 +22,7 @@ Work after v1 is described in [`roadmap-long-term.md`](roadmap-long-term.md).
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0 Foundation | Repository standards, roadmap, architecture, decision records, use case | In progress |
+| M0 Foundation | Repository standards, roadmap, architecture, decision records, use case | In review |
 | M1 Model serving | Inference backends behind an authenticated OpenAI-compatible gateway | Not started |
 | M2 Retrieval | Hybrid RAG with citations, per-user access control, asynchronous ingestion | Not started |
 | M3 Measurement | Evaluation harness, observability, hardware benchmarks | Not started |
@@ -36,10 +36,10 @@ Work after v1 is described in [`roadmap-long-term.md`](roadmap-long-term.md).
   secret scanning.
 - This roadmap, the [architecture](architecture.md) and the
   [decision records](adr/).
-- Use case and corpus (`docs/use-case.md`): problem, users, data, success
+- [Use case and corpus](use-case.md): problem, users, data, success
   criteria.
 
-**Done when** the use case is written and the architecture reflects it.
+**Done when** the use case is confirmed and the architecture reflects it.
 
 ### M1 Model serving
 
@@ -125,23 +125,24 @@ restore reproduces the same retrieval scores as the original.
 
 | # | Branch | Milestone | Scope |
 |---|---|---|---|
-| 1 | `chore/repo-foundation` | M0 | Licence, community files, CI, English documentation |
-| 2 | `docs/use-case` | M0 | Use case and corpus |
-| 3 | `feat/inference-gateway` | M1 | vLLM, llama.cpp, LiteLLM, Compose profiles, smoke test |
-| 4 | `feat/rag-baseline` | M2 | Ingestion, hybrid search, reranker, citations, Open WebUI |
-| 5 | `feat/eval-harness` | M3 | Golden dataset, `make eval`, first scores |
-| 6 | `feat/access-control` | M2 | Document ACLs, identity propagation, leakage tests |
-| 7 | `feat/async-ingestion` | M2 | Worker, versioning, re-indexing |
-| 8 | `feat/observability` | M3 | Traces, metrics, dashboards, alerts |
-| 9 | `bench/inference` | M3 | Hardware benchmarks and cost comparison |
-| 10 | `feat/agent-orchestrator` | M4 | Agents, contracts, tool allow-list, comparison |
-| 11 | `security/hardening-tests` | M5 | Proxy, auth, secrets, audit logs, security tests |
-| 12 | `infra/iac-network` | M5 | Terraform, Ansible, network documentation |
-| 13 | `ops/backup-restore` | M5 | Backup and automated restore test |
-| 14 | `docs/v1-release` | M6 | Final README and release |
+| # | Branch | Milestone | Scope |
+|---|---|---|---|
+| 1 | `chore/repo-foundation` | M0 | Licence, community files, CI, English documentation, use case |
+| 2 | `feat/inference-gateway` | M1 | GPU passthrough VM, vLLM, llama.cpp, LiteLLM, Compose profiles, smoke test |
+| 3 | `feat/rag-baseline` | M2 | Ingestion, hybrid search, reranker, citations, Open WebUI |
+| 4 | `feat/eval-harness` | M3 | Golden dataset, `make eval`, first scores |
+| 5 | `feat/access-control` | M2 | Document ACLs, identity propagation, leakage tests |
+| 6 | `feat/async-ingestion` | M2 | Worker, versioning, re-indexing |
+| 7 | `feat/observability` | M3 | Traces, metrics, dashboards, alerts |
+| 8 | `bench/inference` | M3 | Hardware benchmarks and cost comparison |
+| 9 | `feat/agent-orchestrator` | M4 | Agents, contracts, tool allow-list, comparison |
+| 10 | `security/hardening-tests` | M5 | Proxy, auth, secrets, audit logs, security tests |
+| 11 | `infra/iac-network` | M5 | Terraform, Ansible, network documentation |
+| 12 | `ops/backup-restore` | M5 | Backup and automated restore test |
+| 13 | `docs/v1-release` | M6 | Final README and release |
 
-The evaluation harness (5) lands right after the baseline (4) so that every
-later change is measured. Benchmarks (9) only depend on model serving (3) and
+The evaluation harness (4) lands right after the baseline (3) so that every
+later change is measured. Benchmarks (8) only depend on model serving (2) and
 can be done in parallel.
 
 ## After v1
