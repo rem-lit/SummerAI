@@ -68,7 +68,7 @@ flowchart LR
 | Retrieval store | PostgreSQL with pgvector | Vectors, full-text index, documents, versions, ACLs | M2 ([ADR 0004](adr/0004-retrieval-store.md)) |
 | Ingestion worker | Python | Parsing, chunking, embeddings, versioning | M2 |
 | Model gateway | LiteLLM | Authentication, routing, usage tracking | M1 ([ADR 0003](adr/0003-model-gateway.md)) |
-| GPU inference | vLLM | Main model on the RTX 3090 | M1 ([ADR 0002](adr/0002-inference-runtimes.md)) |
+| GPU inference | vLLM | Main model on the RTX 3090, in a VM with the GPU passed through | M1 ([ADR 0002](adr/0002-inference-runtimes.md), [ADR 0005](adr/0005-gpu-passthrough-vm.md)) |
 | CPU inference | llama.cpp server | Small model; quickstart without GPU | M1 ([ADR 0002](adr/0002-inference-runtimes.md)) |
 | Embeddings and reranker | To be chosen by evaluation | Encode chunks and queries, rerank candidates | M2 |
 | Agent layer | Python, typed JSON schemas | Planner, executor, reviewer, tool allow-list | M4 |
@@ -83,12 +83,15 @@ hypervisors.
 
 ### Hardware
 
-| Host | Role | Hardware |
-|---|---|---|
-| `merlin` | GPU hypervisor | Tower PC, NVIDIA RTX 3090 (24 GB, Ampere), 1 TB NVMe for VM disks and model weights |
-| `kaamelott` | Main hypervisor | Dell PowerEdge R730, hardware RAID, out-of-band management (iDRAC) |
-| `lancelot` | Firewall, inter-VLAN routing, DHCP, internal DNS | Fortinet FortiGate 40F |
-| `bohort` | Switch | Cisco CBS250, 16 × 1 GbE and 2 × SFP |
+| Host | Role | CPU | RAM | GPU | Storage |
+|---|---|---|---|---|---|
+| `merlin` | GPU hypervisor (tower PC) | AMD Ryzen 7 2700, 8 cores | 16 GB | NVIDIA RTX 3090, 24 GB | Over 2 TB (NVMe, SSD, HDD) |
+| `kaamelott` | Main hypervisor (Dell PowerEdge R730) | Intel Xeon E5-2680 v4 | 96 GB | None | 2.4 TB, hardware RAID 5 |
+| `lancelot` | Firewall, inter-VLAN routing, DHCP, internal DNS (Fortinet FortiGate 40F) | — | — | — | — |
+| `bohort` | Switch (Cisco CBS250, 16 × 1 GbE and 2 × SFP) | — | — | — | — |
+
+Both hypervisors run Proxmox VE. The R730 also has out-of-band management
+(iDRAC).
 
 Hosts are named after characters of the French TV series *Kaamelott*.
 
@@ -131,9 +134,13 @@ Principles already in place:
 
 | Virtual machine | Host | Runs |
 |---|---|---|
-| Inference | `merlin` | vLLM, with the RTX 3090 passed through |
+| Inference | `merlin` | vLLM and any other GPU container, with the RTX 3090 passed through ([ADR 0005](adr/0005-gpu-passthrough-vm.md)) |
 | Platform | `kaamelott` | Reverse proxy, Open WebUI, gateway, orchestrator, retrieval, PostgreSQL, ingestion, llama.cpp |
 | Observability | `kaamelott` | Prometheus, Grafana, log storage |
+
+`merlin` only has 16 GB of RAM, and a VM with a passed-through GPU keeps all
+its memory locked. Everything that does not need the GPU therefore runs on
+`kaamelott`, which has 96 GB.
 
 All three sit in VLAN 20. Traffic between them stays inside the VLAN and does
 not cross the firewall, so each VM also runs a host firewall that only accepts
@@ -150,10 +157,11 @@ Flows to add to the firewall flow matrix:
 
 ## Open questions
 
-- **GPU exposure**: PCIe passthrough to a VM (preferred, for isolation) or a
-  container with the host driver.
-- **Sizing**: CPU and memory of both hosts, which decide whether embeddings
-  and the reranker run on CPU or share the GPU with vLLM.
+- **GPU host memory**: 16 GB limits the inference VM to quantised models;
+  an upgrade to 32 GB or more is recommended
+  ([ADR 0005](adr/0005-gpu-passthrough-vm.md)).
+- **Embeddings and reranker**: on the R730's CPU or on the GPU next to vLLM,
+  decided by benchmark.
 - **Raw document store**: an S3-compatible service or a plain volume. The
   distribution model of MinIO's community edition changed in 2025 and needs
   checking; Garage and SeaweedFS are alternatives.

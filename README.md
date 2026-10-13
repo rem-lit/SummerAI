@@ -23,6 +23,11 @@ SummerAI covers the self-hosted alternative end to end:
 - the security, infrastructure and measurement work needed to run it
   reliably.
 
+The reference use case is a private assistant for **Essential Eight
+compliance and IT operations**: it answers over public ASD guidance and a
+fictional company's confidential runbooks, and each role only sees what it is
+allowed to read. See the [use case](docs/use-case.md).
+
 ## What v1 delivers
 
 | Capability | Milestone | Status |
@@ -59,8 +64,8 @@ and [decision records](docs/adr/).
 
 | Role | Hardware |
 |---|---|
-| GPU hypervisor | Tower PC with an NVIDIA RTX 3090 (24 GB), Proxmox VE |
-| Main hypervisor | Dell PowerEdge R730, Proxmox VE |
+| GPU hypervisor | AMD Ryzen 7 2700, 16 GB RAM, NVIDIA RTX 3090 (24 GB), Proxmox VE |
+| Main hypervisor | Dell PowerEdge R730, Intel Xeon E5-2680 v4, 96 GB RAM, Proxmox VE |
 | Firewall and inter-VLAN routing | Fortinet FortiGate 40F |
 | Switch | Cisco CBS250 |
 
@@ -80,6 +85,7 @@ machine without a GPU.
 
 ## Documentation
 
+- [Use case](docs/use-case.md)
 - [Roadmap to v1](docs/roadmap.md) and [long-term roadmap](docs/roadmap-long-term.md)
 - [Architecture](docs/architecture.md)
 - [Architecture decision records](docs/adr/)

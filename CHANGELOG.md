@@ -12,8 +12,11 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - English README with project goals, current status and target architecture.
 - v1 roadmap ([`docs/roadmap.md`](docs/roadmap.md)) and architecture document
   ([`docs/architecture.md`](docs/architecture.md)).
-- Architecture decision records for the inference runtimes, the model gateway
-  and the retrieval store ([`docs/adr/`](docs/adr/)).
+- Use case: a private assistant for Essential Eight compliance and IT
+  operations, with roles, data, success criteria and golden dataset plan
+  ([`docs/use-case.md`](docs/use-case.md)).
+- Architecture decision records for the inference runtimes, the model gateway,
+  the retrieval store and GPU passthrough to a VM ([`docs/adr/`](docs/adr/)).
 - Apache 2.0 licence, security policy, contribution guide and pull request
   template.
 - CI workflow (Markdown lint, link check, secret scan over the full history),
