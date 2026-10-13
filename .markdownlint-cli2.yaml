@@ -1,0 +1,8 @@
+config:
+  # Tables and links make long lines unavoidable.
+  MD013: false
+  # Changelog sections repeat "Added", "Changed"... under each release.
+  MD024:
+    siblings_only: true
+ignores:
+  - .github/pull_request_template.md
