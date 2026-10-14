@@ -5,8 +5,8 @@
 
 ## Context
 
-- The GPU host (`merlin`) has an AMD Ryzen 7 2700 (8 cores), 16 GB of RAM
-  and an NVIDIA RTX 3090 (24 GB), and runs Proxmox VE.
+- The GPU host (`merlin`) has an 8-core AMD Ryzen 7, 32 GB of RAM and an
+  NVIDIA RTX 3090 (24 GB), and runs Proxmox VE.
 - Every GPU workload is a Docker container (vLLM, and possibly the embeddings
   and reranking models), deployed with Ansible and Docker Compose.
 - Proxmox offers two ways to give a guest the GPU: PCIe passthrough to a
@@ -40,12 +40,9 @@ mapping.
 
 ## Consequences
 
-- The host has 16 GB of RAM, so the VM gets about 12 GB at most, all of it
-  locked. In v1, vLLM serves quantised models; loading a full-precision
-  model larger than the VM's memory is risky.
-- Upgrading `merlin` to at least 32 GB of RAM removes that constraint. The
-  Ryzen 7 2700 officially supports up to 64 GB; the exact limit depends on the
-  motherboard.
+- The VM's memory is locked for as long as it runs. With 32 GB on the host,
+  the VM can get about 24 GB, enough to load a model that fills the card,
+  but little is left for other guests on `merlin`.
 - No other guest on `merlin` can use the GPU. Anything that needs it runs
   inside the inference VM.
 - CPU-only services (database, gateway, CPU inference, observability) run on

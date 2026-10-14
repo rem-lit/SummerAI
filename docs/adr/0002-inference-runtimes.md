@@ -6,7 +6,7 @@
 ## Context
 
 - The homelab has one GPU: an NVIDIA RTX 3090 (24 GB, Ampere, compute
-  capability 8.6), in a host with an 8-core Ryzen 7 2700 and 16 GB of RAM.
+  capability 8.6), in a host with an 8-core AMD Ryzen 7 and 32 GB of RAM.
   The main hypervisor, a Dell R730 with a Xeon E5-2680 v4 and 96 GB of RAM,
   has no GPU.
 - vLLM's prebuilt binaries require a GPU with compute capability 7.5 or
@@ -36,9 +36,6 @@
   the main model means restarting the vLLM service.
 - The model must fit in 24 GB together with its KV cache. The model and
   quantisation are chosen with the benchmarks of milestone M3, not up front.
-- The GPU host's 16 GB of RAM, less than the card's memory, also favours
-  quantised models until the host is upgraded
-  ([ADR 0005](0005-gpu-passthrough-vm.md)).
 - Running embeddings and the reranker on the same GPU means lowering the share
   of memory reserved by vLLM. Whether they run there or on CPU is decided by
   measurement.

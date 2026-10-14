@@ -85,7 +85,7 @@ hypervisors.
 
 | Host | Role | CPU | RAM | GPU | Storage |
 |---|---|---|---|---|---|
-| `merlin` | GPU hypervisor (tower PC) | AMD Ryzen 7 2700, 8 cores | 16 GB | NVIDIA RTX 3090, 24 GB | Over 2 TB (NVMe, SSD, HDD) |
+| `merlin` | GPU hypervisor (tower PC) | AMD Ryzen 7, 8 cores | 32 GB | NVIDIA RTX 3090, 24 GB | Over 2 TB (NVMe, SSD, HDD) |
 | `kaamelott` | Main hypervisor (Dell PowerEdge R730) | Intel Xeon E5-2680 v4 | 96 GB | None | 2.4 TB, hardware RAID 5 |
 | `lancelot` | Firewall, inter-VLAN routing, DHCP, internal DNS (Fortinet FortiGate 40F) | — | — | — | — |
 | `bohort` | Switch (Cisco CBS250, 16 × 1 GbE and 2 × SFP) | — | — | — | — |
@@ -138,9 +138,9 @@ Principles already in place:
 | Platform | `kaamelott` | Reverse proxy, Open WebUI, gateway, orchestrator, retrieval, PostgreSQL, ingestion, llama.cpp |
 | Observability | `kaamelott` | Prometheus, Grafana, log storage |
 
-`merlin` only has 16 GB of RAM, and a VM with a passed-through GPU keeps all
-its memory locked. Everything that does not need the GPU therefore runs on
-`kaamelott`, which has 96 GB.
+A VM with a passed-through GPU keeps all its memory locked, so most of
+`merlin`'s 32 GB goes to the inference VM. Everything that does not need the
+GPU runs on `kaamelott`, which has 96 GB.
 
 All three sit in VLAN 20. Traffic between them stays inside the VLAN and does
 not cross the firewall, so each VM also runs a host firewall that only accepts
@@ -157,9 +157,6 @@ Flows to add to the firewall flow matrix:
 
 ## Open questions
 
-- **GPU host memory**: 16 GB limits the inference VM to quantised models;
-  an upgrade to 32 GB or more is recommended
-  ([ADR 0005](adr/0005-gpu-passthrough-vm.md)).
 - **Embeddings and reranker**: on the R730's CPU or on the GPU next to vLLM,
   decided by benchmark.
 - **Raw document store**: an S3-compatible service or a plain volume. The
