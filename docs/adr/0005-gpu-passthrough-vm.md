@@ -5,8 +5,9 @@
 
 ## Context
 
-- The GPU host (`merlin`) has an 8-core AMD Ryzen 7, 32 GB of RAM and an
-  NVIDIA RTX 3090 (24 GB), and runs Proxmox VE.
+- The GPU host (`merlin`) has an Intel Core i5-14400F, 32 GB of RAM and an
+  NVIDIA RTX 3090 (24 GB), and runs Proxmox VE. The CPU has no integrated
+  graphics, so the RTX 3090 is also the card the host boots on.
 - Every GPU workload is a Docker container (vLLM, and possibly the embeddings
   and reranking models), deployed with Ansible and Docker Compose.
 - Proxmox offers two ways to give a guest the GPU: PCIe passthrough to a
@@ -45,5 +46,10 @@ mapping.
   but little is left for other guests on `merlin`.
 - No other guest on `merlin` can use the GPU. Anything that needs it runs
   inside the inference VM.
+- The RTX 3090 is the host's only display adapter. The host must release it
+  at boot (no framebuffer on the card) and is then managed over the network
+  only; local console access goes through a temporary display card.
+- The CPU mixes performance and efficient cores; pinning the VM's vCPUs to
+  the performance cores is worth benchmarking.
 - CPU-only services (database, gateway, CPU inference, observability) run on
   the main hypervisor, which has far more memory.

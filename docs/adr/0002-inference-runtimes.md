@@ -6,7 +6,7 @@
 ## Context
 
 - The homelab has one GPU: an NVIDIA RTX 3090 (24 GB, Ampere, compute
-  capability 8.6), in a host with an 8-core AMD Ryzen 7 and 32 GB of RAM.
+  capability 8.6), in a host with an Intel Core i5-14400F and 32 GB of RAM.
   The main hypervisor, a Dell R730 with a Xeon E5-2680 v4 and 96 GB of RAM,
   has no GPU.
 - vLLM's prebuilt binaries require a GPU with compute capability 7.5 or

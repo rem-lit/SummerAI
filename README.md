@@ -64,7 +64,7 @@ and [decision records](docs/adr/).
 
 | Role | Hardware |
 |---|---|
-| GPU hypervisor | AMD Ryzen 7 (8 cores), 32 GB RAM, NVIDIA RTX 3090 (24 GB), Proxmox VE |
+| GPU hypervisor | Intel Core i5-14400F, 32 GB DDR5, NVIDIA RTX 3090 (24 GB), Proxmox VE |
 | Main hypervisor | Dell PowerEdge R730, Intel Xeon E5-2680 v4, 96 GB RAM, Proxmox VE |
 | Firewall and inter-VLAN routing | Fortinet FortiGate 40F |
 | Switch | Cisco CBS250 |

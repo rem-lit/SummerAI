@@ -85,7 +85,7 @@ hypervisors.
 
 | Host | Role | CPU | RAM | GPU | Storage |
 |---|---|---|---|---|---|
-| `merlin` | GPU hypervisor (tower PC) | AMD Ryzen 7, 8 cores | 32 GB | NVIDIA RTX 3090, 24 GB | Over 2 TB (NVMe, SSD, HDD) |
+| `merlin` | GPU hypervisor (tower PC) | Intel Core i5-14400F, 10 cores (6 performance, 4 efficient) | 32 GB DDR5 | NVIDIA RTX 3090, 24 GB | Over 2 TB (NVMe, SSD, HDD) |
 | `kaamelott` | Main hypervisor (Dell PowerEdge R730) | Intel Xeon E5-2680 v4 | 96 GB | None | 2.4 TB, hardware RAID 5 |
 | `lancelot` | Firewall, inter-VLAN routing, DHCP, internal DNS (Fortinet FortiGate 40F) | — | — | — | — |
 | `bohort` | Switch (Cisco CBS250, 16 × 1 GbE and 2 × SFP) | — | — | — | — |
