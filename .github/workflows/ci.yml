@@ -17,7 +17,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run pre-commit hooks
         # The full git history is scanned for secrets by the job below.
         env:
@@ -30,7 +30,7 @@ jobs:
     env:
       GITLEAKS_VERSION: 8.21.2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Install gitleaks
@@ -45,7 +45,7 @@ jobs:
     name: Link check
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: lycheeverse/lychee-action@v2
         with:
           args: --no-progress --accept 200,429 './**/*.md'
