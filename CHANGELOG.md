@@ -15,8 +15,10 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Use case: a private assistant for Essential Eight compliance and IT
   operations, with roles, data, success criteria and golden dataset plan
   ([`docs/use-case.md`](docs/use-case.md)).
-- Architecture decision records for the inference runtimes, the model gateway,
-  the retrieval store and GPU passthrough to a VM ([`docs/adr/`](docs/adr/)).
+- Architecture decision records ([`docs/adr/`](docs/adr/)): `llama-server` as
+  the only runtime in v1 (ADR 0006), one LXC container per GPU (ADR 0007),
+  Caddy with mutual TLS as the gateway (ADR 0008), PostgreSQL with pgvector
+  (ADR 0004). ADRs 0002, 0003 and 0005 are kept as superseded.
 - Apache 2.0 licence, security policy, contribution guide and pull request
   template.
 - CI workflow (Markdown lint, link check, secret scan over the full history),

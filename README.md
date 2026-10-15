@@ -32,7 +32,7 @@ allowed to read. See the [use case](docs/use-case.md).
 
 | Capability | Milestone | Status |
 |---|---|---|
-| vLLM (GPU) and llama.cpp (CPU) behind a LiteLLM gateway with API keys | M1 | Planned |
+| llama.cpp model servers on two GPUs and on CPU, behind a Caddy gateway with mutual TLS | M1 | Planned |
 | Hybrid retrieval (vector and full-text) with reranking and cited answers | M2 | Planned |
 | Per-user access control enforced inside the retrieval query | M2 | Planned |
 | Evaluation on a golden dataset, run in CI | M3 | Planned |
@@ -51,9 +51,11 @@ flowchart LR
     ui --> orch[Orchestrator API]
     orch --> retr[Retrieval<br/>ACL, hybrid search, rerank]
     retr --> db[(PostgreSQL + pgvector)]
-    orch --> gw[LiteLLM gateway]
-    gw --> vllm[vLLM · RTX 3090]
-    gw --> cpp[llama.cpp · CPU]
+    orch --> gw[Caddy gateway · mTLS]
+    retr --> gw
+    gw --> llm[llama-server · RTX 3090]
+    gw --> emb[Embeddings and reranker · RTX 3060]
+    gw --> cpp[llama-server · CPU]
     orch -.-> obs[OpenTelemetry · Prometheus · Grafana]
 ```
 
@@ -64,8 +66,8 @@ and [decision records](docs/adr/).
 
 | Role | Hardware |
 |---|---|
-| GPU hypervisor | Intel Core i5-14400F, 32 GB DDR5, NVIDIA RTX 3090 (24 GB), Proxmox VE |
-| Main hypervisor | Dell PowerEdge R730, Intel Xeon E5-2680 v4, 96 GB RAM, Proxmox VE |
+| GPU hypervisor | Intel Core i5-14400F, 32 GB DDR5, NVIDIA RTX 3090 (24 GB) and RTX 3060 (8 GB), Proxmox VE |
+| Main hypervisor | Dell PowerEdge R730, 2 × Intel Xeon E5-2680 v4, 96 GB RAM, Proxmox VE |
 | Firewall and inter-VLAN routing | Fortinet FortiGate 40F |
 | Switch | Cisco CBS250 |
 

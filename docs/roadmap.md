@@ -43,16 +43,20 @@ Work after v1 is described in [`roadmap-long-term.md`](roadmap-long-term.md).
 
 ### M1 Model serving
 
-- vLLM serving one instruction model on the RTX 3090
-  ([ADR 0002](adr/0002-inference-runtimes.md)).
-- llama.cpp serving a small GGUF model on CPU, for the quickstart and as a
-  second profile.
-- LiteLLM gateway in front of both, with one API key per client and no
-  unauthenticated endpoint ([ADR 0003](adr/0003-model-gateway.md)).
-- Docker Compose profiles: `gpu` for the homelab, `cpu` for anyone else.
+- Host kernel pinned, NVIDIA driver on the host, one LXC container per GPU
+  ([ADR 0007](adr/0007-one-lxc-per-gpu.md)).
+- llama.cpp built from a pinned release; `llama-server` serving the main
+  model on the RTX 3090, and a small model on CPU
+  ([ADR 0006](adr/0006-llama-server-runtime.md)).
+- RTX 3090 power limit applied at boot; `llama-bench` measured at several
+  limits.
+- Caddy gateway with mutual TLS, one certificate and key per client, and no
+  unauthenticated endpoint ([ADR 0008](adr/0008-gateway-caddy-mtls.md)).
+- A Docker Compose profile for anyone without a GPU, using the same runtime.
 
-**Done when** an OpenAI client can chat through the gateway with both
-profiles, and a smoke test runs in CI against the CPU profile.
+**Done when** a client with a valid certificate can chat through the gateway,
+a client without one is refused, and a smoke test runs in CI against the CPU
+profile.
 
 ### M2 Retrieval
 
@@ -79,9 +83,10 @@ document they are not allowed to read, and every answer carries citations.
 - Per-request traces; metrics for latency, time to first token, tokens per
   second, error rate, GPU utilisation and memory; Grafana dashboards and basic
   alerts exported to `observability/`.
-- Benchmarks in `benchmarks/`: throughput, time to first token, behaviour
-  under load, VRAM, power draw, and cost per million tokens compared with a
-  cloud API.
+- Benchmarks in `benchmarks/`: generation and prompt speed at several context
+  sizes and power limits, time to first token, VRAM, power draw, cost per
+  million tokens compared with a cloud API, and vLLM as a baseline under
+  concurrent load.
 
 **Done when** the README shows real scores and benchmark numbers, each
 reproducible with a documented command.
@@ -128,7 +133,7 @@ restore reproduces the same retrieval scores as the original.
 | # | Branch | Milestone | Scope |
 |---|---|---|---|
 | 1 | `chore/repo-foundation` | M0 | Licence, community files, CI, English documentation, use case |
-| 2 | `feat/inference-gateway` | M1 | GPU passthrough VM, vLLM, llama.cpp, LiteLLM, Compose profiles, smoke test |
+| 2 | `feat/inference-gateway` | M1 | GPU containers, llama.cpp, Caddy with mutual TLS, power limit, CPU Compose profile, smoke test |
 | 3 | `feat/rag-baseline` | M2 | Ingestion, hybrid search, reranker, citations, Open WebUI |
 | 4 | `feat/eval-harness` | M3 | Golden dataset, `make eval`, first scores |
 | 5 | `feat/access-control` | M2 | Document ACLs, identity propagation, leakage tests |
