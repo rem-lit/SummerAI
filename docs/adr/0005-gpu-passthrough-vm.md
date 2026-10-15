@@ -1,6 +1,6 @@
 # 5. Give the GPU to a virtual machine through PCIe passthrough
 
-- **Status:** Proposed
+- **Status:** Superseded by [ADR 0007](0007-one-lxc-per-gpu.md)
 - **Date:** 2026-10-13
 
 ## Context
