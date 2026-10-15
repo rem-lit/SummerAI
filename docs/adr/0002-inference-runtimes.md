@@ -1,6 +1,6 @@
 # 2. Inference runtimes: vLLM on GPU, llama.cpp on CPU
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0006](0006-llama-server-runtime.md)
 - **Date:** 2026-10-13
 
 ## Context
