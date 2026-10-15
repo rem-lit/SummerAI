@@ -1,6 +1,6 @@
 # 3. LiteLLM as the model gateway
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0008](0008-gateway-caddy-mtls.md)
 - **Date:** 2026-10-13
 
 ## Context
