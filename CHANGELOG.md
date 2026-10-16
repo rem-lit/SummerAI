@@ -27,6 +27,16 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Description of the delegated worker loop used to build the project
   ([`docs/delegated-loop.md`](docs/delegated-loop.md)), a proposed ADR 0009,
   and a parallel track in the roadmap.
+- GPU host runbook ([`docs/runbooks/gpu-host.md`](docs/runbooks/gpu-host.md)):
+  pinned kernel, NVIDIA driver with DKMS, one unprivileged container for the
+  RTX 3090, llama.cpp built from a pinned release, the main model served by
+  `llama-server` on loopback with an API key.
+- Host and container configuration files in [`deploy/merlin/`](deploy/merlin/):
+  driver blacklist, persistence and device node units, sandboxed
+  `llama-server` unit.
+- Smoke test for a `llama-server` instance
+  ([`scripts/smoke/llm.sh`](scripts/smoke/llm.sh)): authentication, model
+  alias, chat with separated reasoning, tool call.
 
 ### Changed
 
@@ -34,6 +44,10 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   ([`docs/roadmap-long-term.md`](docs/roadmap-long-term.md)); phases 0 to 5 are
   re-planned in the v1 roadmap.
 - `IDEAS.md` moved to [`docs/ideas.md`](docs/ideas.md) and translated.
+
+### Fixed
+
+- Duplicated table header in the roadmap's pull request sequence.
 
 ### Removed
 

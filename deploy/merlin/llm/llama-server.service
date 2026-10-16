@@ -1,0 +1,36 @@
+# /etc/systemd/system/llama-server.service in the LLM container (RTX 3090).
+# Listens on loopback only; the local Caddy is the only network listener (ADR 0008).
+[Unit]
+Description=llama-server, main language model (RTX 3090)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=llama
+Group=llama
+SupplementaryGroups=gpu
+ExecStart=/opt/llama.cpp/current/bin/llama-server \
+  -m /var/lib/llama/models/Qwen3.8-27B-UD-Q4_K_XL.gguf --alias qwen3.8-27b \
+  --host 127.0.0.1 --port 9931 --api-key-file /etc/llama/api-key \
+  -ngl 99 -c 32768 -np 1 --jinja -fa on -ctk q8_0 -ctv q8_0 \
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 \
+  --no-ui -lm dio --no-slots --metrics
+Restart=on-failure
+RestartSec=5
+
+# Sandboxing. MemoryDenyWriteExecute is left out: the CUDA driver needs it off.
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadOnlyPaths=/var/lib/llama /etc/llama
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target
