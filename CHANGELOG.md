@@ -24,6 +24,10 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - CI workflow (Markdown lint, link check, secret scan over the full history),
   pre-commit hooks and Dependabot updates for GitHub Actions.
 
+- Description of the delegated worker loop used to build the project
+  ([`docs/delegated-loop.md`](docs/delegated-loop.md)), a proposed ADR 0009,
+  and a parallel track in the roadmap.
+
 ### Changed
 
 - The original French roadmap is now an English long-term roadmap
