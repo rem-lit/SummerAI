@@ -162,7 +162,8 @@ Flows to add to the firewall flow matrix:
 
 - **GPU host kernel and driver**: Proxmox VE 9.2 ships kernel 7.0 by default,
   and users report NVIDIA driver problems with it on RTX 30-series cards. The
-  host stays on a kernel validated with both cards until 7.0 is confirmed.
+  host runs a pinned 6.17 kernel, validated with both cards
+  ([runbook](runbooks/gpu-host.md)), until 7.0 is confirmed.
 - **Raw document store**: an S3-compatible service or a plain volume. The
   distribution model of MinIO's community edition changed in 2025 and needs
   checking; Garage and SeaweedFS are alternatives.

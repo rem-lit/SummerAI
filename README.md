@@ -9,7 +9,7 @@ production infrastructure: segmented network, infrastructure as code,
 observability, and measured quality and performance.
 
 > **Status: early development.** The design and the v1 roadmap are done; model
-> serving (milestone M1) is next. This README only reports what exists and
+> serving (milestone M1) is in progress. This README only reports what exists and
 > what has been measured. See the [roadmap](docs/roadmap.md).
 
 ## Why
@@ -32,7 +32,7 @@ allowed to read. See the [use case](docs/use-case.md).
 
 | Capability | Milestone | Status |
 |---|---|---|
-| llama.cpp model servers on two GPUs and on CPU, behind a Caddy gateway with mutual TLS | M1 | Planned |
+| llama.cpp model servers on two GPUs and on CPU, behind a Caddy gateway with mutual TLS | M1 | In progress |
 | Hybrid retrieval (vector and full-text) with reranking and cited answers | M2 | Planned |
 | Per-user access control enforced inside the retrieval query | M2 | Planned |
 | Evaluation on a golden dataset, run in CI | M3 | Planned |
