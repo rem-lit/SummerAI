@@ -126,6 +126,23 @@ restore reproduces the same retrieval scores as the original.
 - Quickstart tested from a fresh clone on a machine without a GPU.
 - Tag `v1.0.0`.
 
+## Parallel track: delegated worker loop
+
+A development workflow, not a product milestone. Local models plan and verify,
+a remote worker produces patches, and deterministic checks decide. It is
+described in [the delegated worker loop](delegated-loop.md) and recorded in
+[ADR 0009](adr/0009-delegated-worker-loop.md).
+
+| Date | Step |
+|---|---|
+| 2026-10-24 | Loop v0 working end to end |
+| 2026-10-24 to 2026-10-28 | Measured run on real tasks |
+| 2026-10-28 | Review of the measurements and decision on the next step |
+
+Related work items: supervision (journal, channel between models, Telegram),
+control plane, retrieval over the git repositories, and the repository
+baseline with review by other agents. They are tracked as issues #3 to #7.
+
 ## Pull request sequence
 
 | # | Branch | Milestone | Scope |

@@ -90,6 +90,7 @@ machine without a GPU.
 - [Use case](docs/use-case.md)
 - [Roadmap to v1](docs/roadmap.md) and [long-term roadmap](docs/roadmap-long-term.md)
 - [Architecture](docs/architecture.md)
+- [Delegated worker loop](docs/delegated-loop.md): how the project is built with local and remote models
 - [Architecture decision records](docs/adr/)
 - [Idea backlog](docs/ideas.md)
 - [Changelog](CHANGELOG.md)
