@@ -91,10 +91,6 @@ bench() { # bench <label> <llama-bench test arguments...>
   sampler=
 }
 
-rate() { # rate <json>: mean and standard deviation in tokens/s
-  jq -r '.[0] | "\(.avg_ts * 10 | round / 10) ± \(.stddev_ts * 10 | round / 10)"' "$1"
-}
-
 busy_power() { # busy_power <csv>: median board power (W) while the GPU is busy
   awk -F', *' -v busy="$busy" '$3 >= busy { print $2 }' "$1" | sort -n \
     | awk '{ v[NR] = $1 }
@@ -102,8 +98,12 @@ busy_power() { # busy_power <csv>: median board power (W) while the GPU is busy
                  printf "%.0f\n", NR % 2 ? v[(NR + 1) / 2] : (v[NR / 2] + v[NR / 2 + 1]) / 2 }'
 }
 
-per_joule() { # per_joule <tokens/s> <watts>
-  awk -v t="$1" -v p="$2" 'BEGIN { if (p + 0 > 0) printf "%.3f\n", t / p; else print "n/a" }'
+columns() { # columns <label>: "tokens/s ± sd | W | tokens/J" for one test
+  local power
+  power=$(busy_power "$out/$1.power.csv")
+  jq -r '.[0] | "\(.avg_ts) \(.stddev_ts)"' "$out/$1.json" \
+    | awk -v p="$power" '{ printf "%.1f ± %.1f | %s | ", $1, $2, p
+                           if (p + 0 > 0) printf "%.3f\n", $1 / p; else print "n/a" }'
 }
 
 emit() { echo "$@" | tee -a "$out/summary.md"; }
@@ -113,16 +113,15 @@ emit "GPU: $(query name), driver $(query driver_version)," \
 emit "Model: $(basename "$model"), $reps repetitions per test," \
   "power = median of samples with GPU utilisation >= $busy %"
 emit
-emit "| Limit (W) | Prompt 512 (tok/s) | Power (W) | Generation 128 (tok/s) | Power (W) | Generation (tok/J) |"
-emit "|---:|---:|---:|---:|---:|---:|"
+emit "| Limit (W) | Prompt 4096 (tok/s) | Power (W) | Prompt (tok/J)" \
+  "| Generation 128 (tok/s) | Power (W) | Generation (tok/J) |"
+emit "|---:|---:|---:|---:|---:|---:|---:|"
 for w in "${watts[@]}"; do
   nvidia-smi -i "$gpu" -pl "$w" >/dev/null
-  bench "${w}W-pp" -p 512 -n 0
+  # The prompt test is long enough for several power samples per repetition.
+  bench "${w}W-pp" -p 4096 -n 0
   bench "${w}W-tg" -p 0 -n 128
-  tg_power=$(busy_power "$out/${w}W-tg.power.csv")
-  emit "| $w | $(rate "$out/${w}W-pp.json") | $(busy_power "$out/${w}W-pp.power.csv")" \
-    "| $(rate "$out/${w}W-tg.json") | $tg_power" \
-    "| $(per_joule "$(jq '.[0].avg_ts' "$out/${w}W-tg.json")" "$tg_power") |"
+  emit "| $w | $(columns "${w}W-pp") | $(columns "${w}W-tg") |"
 done
 emit
 emit "llama.cpp build: $(jq -r '.[0].build_commit' "$out/${watts[0]}W-pp.json")"
