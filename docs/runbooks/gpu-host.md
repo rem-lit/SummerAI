@@ -9,8 +9,8 @@ checked before the next one; Ansible will replace this runbook in M5.
 The configuration files referenced below are in
 [`deploy/merlin/`](../../deploy/merlin/).
 
-> **Status:** host and LLM container done. Still to do in M1: the RTX 3060
-> container, the power limit and its benchmarks, and the Caddy gateway.
+> **Status:** host, LLM container and power limit done. Still to do in M1: the
+> RTX 3060 container and the Caddy gateway.
 
 ## Pinned versions
 
@@ -211,6 +211,22 @@ are rejected, that the model is listed under its alias, that a chat answer
 stops normally with the reasoning in `reasoning_content`, and that a tool call
 returns valid JSON arguments. It reads the key from a file and never puts it
 on the command line.
+
+## 10. Host: power limit
+
+The limit comes from a measured sweep, described with its results in
+[`benchmarks/power-limit/`](../../benchmarks/power-limit/). Copy
+[`nvidia-power-limits.service`](../../deploy/merlin/host/nvidia-power-limits.service)
+to `/etc/systemd/system/`, then:
+
+```bash
+systemctl daemon-reload
+systemctl enable --now nvidia-power-limits
+```
+
+Check, also after a reboot:
+`nvidia-smi -i 00000000:01:00.0 --query-gpu=power.limit --format=csv` shows
+the chosen limit.
 
 ## Troubleshooting
 

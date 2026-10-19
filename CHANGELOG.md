@@ -37,6 +37,11 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Smoke test for a `llama-server` instance
   ([`scripts/smoke/llm.sh`](scripts/smoke/llm.sh)): authentication, model
   alias, chat with separated reasoning, tool call.
+- Power-limit benchmark for one GPU
+  ([`scripts/bench/power-limit.sh`](scripts/bench/power-limit.sh)) with a
+  chart generator, and the first results for the RTX 3090
+  ([`benchmarks/power-limit/`](benchmarks/power-limit/)). A boot unit sets the
+  chosen limit.
 
 ### Changed
 

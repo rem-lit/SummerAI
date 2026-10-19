@@ -6,3 +6,5 @@ config:
     siblings_only: true
 ignores:
   - .github/pull_request_template.md
+  # Raw benchmark output, committed as the scripts wrote it.
+  - benchmarks/*/*/summary.md

@@ -76,9 +76,13 @@ between them. Nothing is exposed to the internet.
 
 ## Results
 
-None yet. Evaluation scores and benchmarks will be published here once they
-are produced by the scripts in this repository, together with the hardware,
-model, settings and commit used.
+Every result is produced by a script in this repository and published with
+the hardware, model, settings and commit used.
+
+- [Power limit, RTX 3090](benchmarks/power-limit/): at 300 W instead of
+  350 W, generation is 2.9 % slower for 8.8 % less power.
+
+Evaluation scores will follow in milestone M3.
 
 ## Getting started
 
