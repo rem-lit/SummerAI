@@ -13,8 +13,9 @@
 #   BENCH_BUSY   GPU utilisation (%) above which a power sample counts (default 80)
 #   BENCH_OUT    results directory (default power-limit-<UTC timestamp>)
 # Runs on the Proxmox host as root. Requires pct, nvidia-smi and jq.
-# llama-server is stopped in the container during the sweep; on exit the
-# previous power limit is restored and the service restarted.
+# Every active llama-server@ instance in the container is stopped during the
+# sweep; on exit the previous power limit is restored and those instances
+# restarted.
 set -euo pipefail
 
 usage() { sed -n '5,7p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
@@ -53,25 +54,23 @@ for w in "${watts[@]}"; do
   fi
 done
 
-service_was_active=0
-if pct exec "$ct" -- systemctl is-active --quiet llama-server; then
-  service_was_active=1
-fi
+mapfile -t services < <(pct exec "$ct" -- systemctl list-units --state=active \
+  --plain --no-legend 'llama-server@*.service' | awk '{print $1}')
 
 sampler=
 restore() {
   if [[ -n "$sampler" ]]; then kill "$sampler" 2>/dev/null || true; fi
   nvidia-smi -i "$gpu" -pl "$previous" >/dev/null \
     || echo "WARNING: could not restore the $previous W power limit" >&2
-  if (( service_was_active )); then
-    pct exec "$ct" -- systemctl start llama-server \
-      || echo "WARNING: could not restart llama-server" >&2
+  if (( ${#services[@]} > 0 )); then
+    pct exec "$ct" -- systemctl start "${services[@]}" \
+      || echo "WARNING: could not restart ${services[*]}" >&2
   fi
 }
 trap restore EXIT
 
-if (( service_was_active )); then
-  pct exec "$ct" -- systemctl stop llama-server
+if (( ${#services[@]} > 0 )); then
+  pct exec "$ct" -- systemctl stop "${services[@]}"
 fi
 mkdir -p "$out"
 
