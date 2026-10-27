@@ -1,7 +1,10 @@
-# /etc/systemd/system/llama-server.service in the LLM container (RTX 3090).
-# Listens on loopback only; the local Caddy is the only network listener (ADR 0008).
+# /etc/systemd/system/llama-server@.service in the GPU containers.
+# One instance per model: llama-server@chat on the RTX 3090, llama-server@embed
+# and llama-server@rerank on the RTX 3060. The arguments of an instance are in
+# /etc/llama/<instance>.conf. Instances listen on loopback only; the local
+# Caddy is the only network listener (ADR 0008).
 [Unit]
-Description=llama-server, main language model (RTX 3090)
+Description=llama-server (%i)
 After=network-online.target
 Wants=network-online.target
 
@@ -9,12 +12,9 @@ Wants=network-online.target
 User=llama
 Group=llama
 SupplementaryGroups=gpu
-ExecStart=/opt/llama.cpp/current/bin/llama-server \
-  -m /var/lib/llama/models/Qwen3.8-27B-UD-Q4_K_XL.gguf --alias qwen3.8-27b \
-  --host 127.0.0.1 --port 9931 --api-key-file /etc/llama/api-key \
-  -ngl 99 -c 32768 -np 1 --jinja -fa on -ctk q8_0 -ctv q8_0 \
-  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 \
-  --no-ui -lm dio --no-slots --metrics
+EnvironmentFile=/etc/llama/%i.conf
+# Unbraced, so that systemd splits the arguments on whitespace.
+ExecStart=/opt/llama.cpp/current/bin/llama-server $LLAMA_ARGS
 Restart=on-failure
 RestartSec=5
 

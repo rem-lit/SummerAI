@@ -175,7 +175,7 @@ key never leaves the container and is not stored in this repository.
 
 ## 8. Service
 
-Copy [`llama-server.service`](../../deploy/merlin/llm/llama-server.service)
+Copy [`llama-server.service`](../../deploy/merlin/llama/llama-server@.service)
 to `/etc/systemd/system/`, then `systemctl daemon-reload` and
 `systemctl enable --now llama-server`.
 
