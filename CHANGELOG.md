@@ -27,13 +27,49 @@ and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Description of the delegated worker loop used to build the project
   ([`docs/delegated-loop.md`](docs/delegated-loop.md)), a proposed ADR 0009,
   and a parallel track in the roadmap.
+- GPU host runbook ([`docs/runbooks/gpu-host.md`](docs/runbooks/gpu-host.md)):
+  pinned kernel, NVIDIA driver with DKMS, one unprivileged container for the
+  RTX 3090, llama.cpp built from a pinned release, the main model served by
+  `llama-server` on loopback with an API key.
+- Host and container configuration files in [`deploy/merlin/`](deploy/merlin/):
+  driver blacklist, persistence and device node units, sandboxed
+  `llama-server` unit.
+- Smoke test for a `llama-server` instance
+  ([`scripts/smoke/llm.sh`](scripts/smoke/llm.sh)): authentication, model
+  alias, chat with separated reasoning, tool call.
+- Power-limit benchmark for one GPU
+  ([`scripts/bench/power-limit.sh`](scripts/bench/power-limit.sh)) with a
+  chart generator, and the first results for the RTX 3090
+  ([`benchmarks/power-limit/`](benchmarks/power-limit/)). A boot unit sets the
+  chosen limit.
+- Retrieval container on the RTX 3060: embedding (`Qwen3-Embedding-0.6B`) and
+  reranking (`Qwen3-Reranker-0.6B`) models, each served by its own
+  `llama-server` instance, with their checksums in
+  [`deploy/merlin/llama/models.sha256`](deploy/merlin/llama/models.sha256).
+- Smoke test for the retrieval models
+  ([`scripts/smoke/retrieval.sh`](scripts/smoke/retrieval.sh)): authentication,
+  vector size and norm, similarity, reranking order.
 
 ### Changed
 
+- `llama-server` runs as a template unit, one instance per model, with the
+  arguments of each instance in `/etc/llama/<instance>.conf`. The unit moved
+  from `deploy/merlin/llm/llama-server.service` to
+  [`deploy/merlin/llama/llama-server@.service`](deploy/merlin/llama/llama-server@.service).
+- The smoke tests share their helpers in
+  [`scripts/smoke/lib.sh`](scripts/smoke/lib.sh), and the LLM smoke test asks
+  in French about the ANSSI hygiene guide and a CVE instead of Essential Eight
+  and the weather.
+- The power-limit benchmark stops and restarts every `llama-server` instance
+  of the container.
 - The original French roadmap is now an English long-term roadmap
   ([`docs/roadmap-long-term.md`](docs/roadmap-long-term.md)); phases 0 to 5 are
   re-planned in the v1 roadmap.
 - `IDEAS.md` moved to [`docs/ideas.md`](docs/ideas.md) and translated.
+
+### Fixed
+
+- Duplicated table header in the roadmap's pull request sequence.
 
 ### Removed
 

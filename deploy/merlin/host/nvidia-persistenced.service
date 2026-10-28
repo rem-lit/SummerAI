@@ -1,0 +1,13 @@
+# /etc/systemd/system/nvidia-persistenced.service on the GPU host.
+# Keeps the driver loaded so device nodes and power limits survive idle periods.
+[Unit]
+Description=NVIDIA Persistence Daemon
+After=systemd-modules-load.service
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/nvidia-persistenced --verbose
+ExecStopPost=/bin/rm -rf /var/run/nvidia-persistenced
+
+[Install]
+WantedBy=multi-user.target

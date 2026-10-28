@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# Power-limit sweep for one GPU: at each limit, runs llama-bench in the
+# container that owns the GPU and samples the board power from the host.
+#
+# Usage: scripts/bench/power-limit.sh <container id> <gpu> [watts...]
+#   <gpu> is the nvidia-smi selector of the card passed to the container
+#   (index, PCI bus ID or UUID). Default limits: 350 300 280 250.
+# Environment:
+#   BENCH_MODEL  model path in the container
+#                default /var/lib/llama/models/Qwen3.8-27B-UD-Q4_K_XL.gguf
+#   BENCH_BIN    default /opt/llama.cpp/current/bin/llama-bench
+#   BENCH_REPS   repetitions per test (default 5)
+#   BENCH_BUSY   GPU utilisation (%) above which a power sample counts (default 80)
+#   BENCH_OUT    results directory (default power-limit-<UTC timestamp>)
+# Runs on the Proxmox host as root. Requires pct, nvidia-smi and jq.
+# Every active llama-server@ instance in the container is stopped during the
+# sweep; on exit the previous power limit is restored and those instances
+# restarted.
+set -euo pipefail
+
+usage() { sed -n '5,7p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+(( $# >= 2 )) || usage
+ct=$1 gpu=$2
+shift 2
+watts=("$@")
+(( ${#watts[@]} > 0 )) || watts=(350 300 280 250)
+
+model="${BENCH_MODEL:-/var/lib/llama/models/Qwen3.8-27B-UD-Q4_K_XL.gguf}"
+bin="${BENCH_BIN:-/opt/llama.cpp/current/bin/llama-bench}"
+reps="${BENCH_REPS:-5}"
+busy="${BENCH_BUSY:-80}"
+out="${BENCH_OUT:-power-limit-$(date -u +%Y%m%dT%H%M%SZ)}"
+
+for cmd in pct nvidia-smi jq; do
+  command -v "$cmd" >/dev/null || { echo "missing dependency: $cmd" >&2; exit 2; }
+done
+(( EUID == 0 )) || { echo "run as root on the Proxmox host" >&2; exit 2; }
+
+query() { # query <field>: one nvidia-smi field for the selected GPU
+  nvidia-smi -i "$gpu" --query-gpu="$1" --format=csv,noheader,nounits
+}
+
+# The container must see exactly the selected card, and no other.
+ct_uuid=$(pct exec "$ct" -- nvidia-smi --query-gpu=uuid --format=csv,noheader)
+[[ "$ct_uuid" == "$(query uuid)" ]] \
+  || { echo "container $ct does not see exactly GPU $gpu" >&2; exit 2; }
+
+min=$(query power.min_limit) max=$(query power.max_limit) previous=$(query power.limit)
+min=${min%.*} max=${max%.*} previous=${previous%.*}
+for w in "${watts[@]}"; do
+  if ! [[ "$w" =~ ^[0-9]+$ ]] || (( w < min || w > max )); then
+    echo "limit $w W outside the card's range ($min-$max W)" >&2
+    exit 2
+  fi
+done
+
+mapfile -t services < <(pct exec "$ct" -- systemctl list-units --state=active \
+  --plain --no-legend 'llama-server@*.service' | awk '{print $1}')
+
+sampler=
+restore() {
+  if [[ -n "$sampler" ]]; then kill "$sampler" 2>/dev/null || true; fi
+  nvidia-smi -i "$gpu" -pl "$previous" >/dev/null \
+    || echo "WARNING: could not restore the $previous W power limit" >&2
+  if (( ${#services[@]} > 0 )); then
+    pct exec "$ct" -- systemctl start "${services[@]}" \
+      || echo "WARNING: could not restart ${services[*]}" >&2
+  fi
+}
+trap restore EXIT
+
+if (( ${#services[@]} > 0 )); then
+  pct exec "$ct" -- systemctl stop "${services[@]}"
+fi
+mkdir -p "$out"
+
+bench() { # bench <label> <llama-bench test arguments...>
+  local label=$1
+  shift
+  nvidia-smi -i "$gpu" --format=csv,noheader,nounits -lms 500 \
+    --query-gpu=timestamp,power.draw,utilization.gpu,temperature.gpu,clocks.sm \
+    >"$out/$label.power.csv" &
+  sampler=$!
+  # Same settings as the service: all layers on the GPU, flash attention,
+  # q8_0 key-value cache, direct I/O.
+  pct exec "$ct" -- "$bin" -m "$model" -ngl 99 -fa on -ctk q8_0 -ctv q8_0 \
+    -lm dio -r "$reps" -o json "$@" >"$out/$label.json" 2>"$out/$label.log"
+  kill "$sampler"
+  wait "$sampler" 2>/dev/null || true
+  sampler=
+}
+
+busy_power() { # busy_power <csv>: median board power (W) while the GPU is busy
+  awk -F', *' -v busy="$busy" '$3 >= busy { print $2 }' "$1" | sort -n \
+    | awk '{ v[NR] = $1 }
+           END { if (NR == 0) { print "n/a"; exit }
+                 printf "%.0f\n", NR % 2 ? v[(NR + 1) / 2] : (v[NR / 2] + v[NR / 2 + 1]) / 2 }'
+}
+
+columns() { # columns <label>: "tokens/s ± sd | W | tokens/J" for one test
+  local power
+  power=$(busy_power "$out/$1.power.csv")
+  jq -r '.[0] | "\(.avg_ts) \(.stddev_ts)"' "$out/$1.json" \
+    | awk -v p="$power" '{ printf "%.1f ± %.1f | %s | ", $1, $2, p
+                           if (p + 0 > 0) printf "%.3f\n", $1 / p; else print "n/a" }'
+}
+
+emit() { echo "$@" | tee -a "$out/summary.md"; }
+
+emit "GPU: $(query name), driver $(query driver_version)," \
+  "default limit $(query power.default_limit) W"
+emit "Model: $(basename "$model"), $reps repetitions per test," \
+  "power = median of samples with GPU utilisation >= $busy %"
+emit
+emit "| Limit (W) | Prompt 4096 (tok/s) | Power (W) | Prompt (tok/J)" \
+  "| Generation 128 (tok/s) | Power (W) | Generation (tok/J) |"
+emit "|---:|---:|---:|---:|---:|---:|---:|"
+for w in "${watts[@]}"; do
+  nvidia-smi -i "$gpu" -pl "$w" >/dev/null
+  # The prompt test is long enough for several power samples per repetition.
+  bench "${w}W-pp" -p 4096 -n 0
+  bench "${w}W-tg" -p 0 -n 128
+  emit "| $w | $(columns "${w}W-pp") | $(columns "${w}W-tg") |"
+done
+emit
+emit "llama.cpp build: $(jq -r '.[0].build_commit' "$out/${watts[0]}W-pp.json")"
+echo "Results in $out/"

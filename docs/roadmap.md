@@ -23,7 +23,7 @@ Work after v1 is described in [`roadmap-long-term.md`](roadmap-long-term.md).
 | Milestone | Scope | Status |
 |---|---|---|
 | M0 Foundation | Repository standards, roadmap, architecture, decision records, use case | In review |
-| M1 Model serving | Inference backends behind an authenticated OpenAI-compatible gateway | Not started |
+| M1 Model serving | Inference backends behind an authenticated OpenAI-compatible gateway | In progress |
 | M2 Retrieval | Hybrid RAG with citations, per-user access control, asynchronous ingestion | Not started |
 | M3 Measurement | Evaluation harness, observability, hardware benchmarks | Not started |
 | M4 Agents | Planner, executor and reviewer with JSON contracts and restricted tools | Not started |
@@ -145,8 +145,6 @@ baseline with review by other agents. They are tracked as issues #3 to #7.
 
 ## Pull request sequence
 
-| # | Branch | Milestone | Scope |
-|---|---|---|---|
 | # | Branch | Milestone | Scope |
 |---|---|---|---|
 | 1 | `chore/repo-foundation` | M0 | Licence, community files, CI, English documentation, use case |
