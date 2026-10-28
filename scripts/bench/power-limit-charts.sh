@@ -31,17 +31,17 @@ chart() { # chart <column> <title> <y-axis label>
       print "---"
       print "xychart-beta"
       print "  title \"" title "\""
-      print "  x-axis \"Power limit (W)\" [" x "]"
+      print "  x-axis \"Limite de puissance (W)\" [" x "]"
       print "  y-axis \"" ylabel "\" 0 --> " top
       print "  bar [" y "]"
       print "```"
     }' <<<"$rows"
 }
 
-chart 6 "Generation speed" "Tokens per second"
+chart 6 "Vitesse de génération" "Jetons par seconde"
 echo
-chart 8 "Generation efficiency" "Tokens per joule"
+chart 8 "Efficacité de la génération" "Jetons par joule"
 echo
-chart 3 "Prompt processing speed" "Tokens per second"
+chart 3 "Vitesse de traitement du prompt" "Jetons par seconde"
 echo
-chart 5 "Prompt processing efficiency" "Tokens per joule"
+chart 5 "Efficacité du traitement du prompt" "Jetons par joule"

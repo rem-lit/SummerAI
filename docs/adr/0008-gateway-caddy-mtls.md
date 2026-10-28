@@ -1,70 +1,79 @@
-# 8. Caddy with mutual TLS as the model gateway
+# 8. Caddy avec TLS mutuel comme passerelle des modèles
 
-- **Status:** Accepted
-- **Date:** 2026-10-15
-- **Supersedes:** [ADR 0003](0003-model-gateway.md)
+- **Statut :** Acceptée
+- **Date :** 2026-10-15
+- **Remplace :** [ADR 0003](0003-model-gateway.md)
 
-## Context
+## Contexte
 
-The gateway is the only path to the model servers, so the design that is
-**most secure by default** wins over convenience features.
+La passerelle est le seul chemin vers les serveurs de modèles : la conception
+**la plus sûre par défaut** l'emporte donc sur les fonctions de confort.
 
-- **LiteLLM** (ADR 0003) is open by default: without a master key, every
-  request is accepted. Its admin UI and API docs are on by default. In 2026 it
-  had a PyPI supply-chain compromise (versions 1.82.7 and 1.82.8,
-  [vendor write-up](https://docs.litellm.ai/blog/security-update-march-2026))
-  and several critical advisories, including an unauthenticated SQL injection
-  in key verification and an authentication bypass to management routes
-  ([LiteLLM advisories](https://github.com/BerriAI/litellm/security/advisories)).
-- **`llama-server`** binds to `127.0.0.1` by default and supports API keys
-  (`--api-key-file`). Health checks and the built-in web UI stay
-  unauthenticated, and it has no client certificate support
-  ([server README](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md)).
-- **Caddy** is a single static binary with automatic TLS, client certificate
-  verification, body size limits, timeouts and forward authentication
-  ([Caddy documentation](https://caddyserver.com/docs/)).
-- v1 has few, known clients: Open WebUI, the orchestrator, the evaluation and
-  benchmark scripts.
+- **LiteLLM** (ADR 0003) est ouvert par défaut : sans clé maîtresse, toute
+  requête est acceptée. Son interface d'administration et sa documentation
+  d'API sont activées par défaut. En 2026, il a subi une compromission de sa
+  chaîne d'approvisionnement sur PyPI (versions 1.82.7 et 1.82.8,
+  [compte rendu de l'éditeur](https://docs.litellm.ai/blog/security-update-march-2026))
+  et plusieurs avis de sécurité critiques, dont une injection SQL sans
+  authentification dans la vérification des clés et un contournement de
+  l'authentification vers les routes d'administration
+  ([avis de sécurité de LiteLLM](https://github.com/BerriAI/litellm/security/advisories)).
+- **`llama-server`** écoute sur `127.0.0.1` par défaut et prend en charge les
+  clés d'API (`--api-key-file`). Les contrôles de santé et l'interface web
+  intégrée restent sans authentification, et il ne prend pas en charge les
+  certificats clients
+  ([README du serveur](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md)).
+- **Caddy** est un binaire statique unique avec TLS automatique, vérification
+  des certificats clients, limites de taille de corps de requête, délais
+  d'expiration et authentification déléguée (forward authentication)
+  ([documentation de Caddy](https://caddyserver.com/docs/)).
+- La v1 a peu de clients, tous connus : Open WebUI, l'orchestrateur, les
+  scripts d'évaluation et de mesure.
 
-## Decision
+## Décision
 
-- **Caddy is the only entry point to every model server.**
-- **Machine clients authenticate with mutual TLS**, using certificates issued
-  by a private certificate authority for this project, one per client. Each
-  client also sends its own API key, and is only routed to the models it
-  needs.
-- **Humans only use Open WebUI**, behind the same proxy, with its own login.
-- On `merlin`, each `llama-server` binds to `127.0.0.1` inside its container,
-  with its own API key file. A Caddy instance in each container is the only
-  listener on the network, accepts only the gateway's client certificate,
-  and injects the key.
-- `llama-server` runs with `--no-webui` and without slot inspection, property
-  writes, tools, agent features or the RPC backend.
-- Request body size, response timeouts and rate limits are set per client
-  (OWASP LLM10, unbounded consumption).
-- Host firewalls only accept gateway traffic on the model ports.
+- **Caddy est le seul point d'entrée vers chaque serveur de modèles.**
+- **Les clients machines s'authentifient par TLS mutuel**, avec des
+  certificats émis par une autorité de certification privée propre au projet,
+  un par client. Chaque client envoie aussi sa propre clé d'API, et n'est
+  routé que vers les modèles dont il a besoin.
+- **Les humains n'utilisent qu'Open WebUI**, derrière le même proxy, avec sa
+  propre connexion.
+- Sur `merlin`, chaque `llama-server` écoute sur `127.0.0.1` dans son
+  conteneur, avec son propre fichier de clé d'API. Une instance Caddy dans
+  chaque conteneur est la seule à écouter sur le réseau ; elle n'accepte que
+  le certificat client de la passerelle et injecte la clé.
+- `llama-server` tourne avec `--no-webui` et sans inspection des slots,
+  écriture de propriétés, outils, fonctions d'agent ni backend RPC.
+- La taille du corps des requêtes, les délais de réponse et les limites de
+  débit sont fixés par client (OWASP LLM10, consommation non bornée).
+- Les pare-feu des hôtes n'acceptent que le trafic de la passerelle sur les
+  ports des modèles.
 
-## Consequences
+## Conséquences
 
-- No component in front of the models stores a database of keys or exposes an
-  admin interface, so the attack surface stays small.
-- Certificates must be issued, rotated and revoked. This is automated with
-  Ansible and documented in the operations runbook.
-- No built-in usage accounting or spend tracking: usage comes from the
-  `llama-server` metrics and the gateway access logs, which is enough for a
-  single-operator platform.
-- Routing to a cloud model in the cloud variant is a new Caddy route with its
-  own upstream credentials.
-- If virtual keys or per-team budgets become a real need, LiteLLM can be
-  reconsidered at a patched version, from a signed image, with its admin UI
-  and docs disabled.
+- Aucun composant devant les modèles ne stocke de base de clés ni n'expose
+  d'interface d'administration : la surface d'attaque reste réduite.
+- Les certificats doivent être émis, renouvelés et révoqués. C'est automatisé
+  avec Ansible et documenté dans le runbook d'exploitation.
+- Pas de comptabilité d'usage ni de suivi des dépenses intégrés : l'usage
+  provient des métriques de `llama-server` et des journaux d'accès de la
+  passerelle, ce qui suffit pour une plateforme à un seul opérateur.
+- Router vers un modèle cloud dans la variante cloud revient à ajouter une
+  route Caddy avec ses propres identifiants vers l'amont.
+- Si les clés virtuelles ou les budgets par équipe deviennent un vrai besoin,
+  LiteLLM peut être reconsidéré dans une version corrigée, à partir d'une
+  image signée, avec son interface d'administration et sa documentation
+  désactivées.
 
-## Alternatives considered
+## Options envisagées
 
-- **LiteLLM**: rich features, but open by default and a large attack surface
-  with a heavy 2026 advisory record.
-- **`llama-server` API keys only**: simple, but keys travel in clear text
-  without TLS, and health and UI endpoints stay open.
-- **llama-swap**: useful to switch models later, but its API keys are off by
-  default; if used, it sits behind Caddy.
-- **Envoy AI Gateway**: designed for Kubernetes, more than v1 needs.
+- **LiteLLM** : riche en fonctions, mais ouvert par défaut et avec une large
+  surface d'attaque, et un lourd historique d'avis de sécurité en 2026.
+- **Clés d'API de `llama-server` seules** : simple, mais les clés circulent en
+  clair sans TLS, et les points d'accès de santé et d'interface restent
+  ouverts.
+- **llama-swap** : utile pour changer de modèle plus tard, mais ses clés d'API
+  sont désactivées par défaut ; s'il est utilisé, il se place derrière Caddy.
+- **Envoy AI Gateway** : conçu pour Kubernetes, plus que ce dont la v1 a
+  besoin.

@@ -1,109 +1,121 @@
 # SummerAI
 
 [![CI](https://github.com/rem-lit/SummerAI/actions/workflows/ci.yml/badge.svg)](https://github.com/rem-lit/SummerAI/actions/workflows/ci.yml)
-[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Licence : Apache 2.0](https://img.shields.io/badge/licence-Apache%202.0-blue.svg)](LICENSE)
 
-A self-hosted AI platform that answers questions over private documents, with
-cited sources and per-user access control. It is built and operated like
-production infrastructure: segmented network, infrastructure as code,
-observability, and measured quality and performance.
+Une plateforme d'IA auto-hébergée qui répond à des questions sur des documents
+privés, en citant ses sources et en respectant les droits d'accès de chaque
+utilisateur. Elle est construite et exploitée comme une infrastructure de
+production : réseau segmenté, infrastructure as code, observabilité, qualité
+et performances mesurées.
 
-> **Status: early development.** The design and the v1 roadmap are done; model
-> serving (milestone M1) is in progress. This README only reports what exists and
-> what has been measured. See the [roadmap](docs/roadmap.md).
+SummerAI est aussi la vitrine et la base technique d'une activité
+d'installation d'infrastructures IA et RAG en entreprise.
 
-## Why
+> **État : développement en cours.** La conception et la feuille de route de
+> la v1 sont faites ; le service des modèles (jalon M1) est en cours. Ce README
+> ne présente que ce qui existe et ce qui a été mesuré. Voir la
+> [feuille de route](docs/roadmap.md).
 
-Many organisations cannot send internal documents to a public LLM API.
-SummerAI covers the self-hosted alternative end to end:
+## Pourquoi
 
-- local models behind one authenticated, OpenAI-compatible gateway;
-- retrieval that enforces who can read what, and cites its sources;
-- an agent layer whose tools are explicitly allow-listed;
-- the security, infrastructure and measurement work needed to run it
-  reliably.
+Beaucoup d'organisations ne peuvent pas envoyer leurs documents internes à une
+API de modèle de langage publique. SummerAI couvre l'alternative auto-hébergée
+de bout en bout :
 
-The reference use case is a private assistant for **Essential Eight
-compliance and IT operations**: it answers over public ASD guidance and a
-fictional company's confidential runbooks, and each role only sees what it is
-allowed to read. See the [use case](docs/use-case.md).
+- des modèles locaux derrière une seule passerelle authentifiée, compatible
+  OpenAI ;
+- une recherche documentaire qui applique les droits de lecture et cite ses
+  sources ;
+- une couche d'agents dont les outils sont explicitement autorisés ;
+- le travail de sécurité, d'infrastructure et de mesure nécessaire pour la
+  faire tourner de façon fiable.
 
-## What v1 delivers
+Le cas d'usage de référence est un **assistant de conformité cyber** : il
+répond en s'appuyant sur les publications de l'ANSSI (guide d'hygiène
+informatique, référentiel ReCyF pour la directive NIS 2) et sur les
+procédures confidentielles d'une entreprise fictive, et chaque rôle ne voit que
+ce qu'il a le droit de lire. Voir le [cas d'usage](docs/use-case.md).
 
-| Capability | Milestone | Status |
+## Ce que livre la v1
+
+| Fonction | Jalon | État |
 |---|---|---|
-| llama.cpp model servers on two GPUs and on CPU, behind a Caddy gateway with mutual TLS | M1 | In progress |
-| Hybrid retrieval (vector and full-text) with reranking and cited answers | M2 | Planned |
-| Per-user access control enforced inside the retrieval query | M2 | Planned |
-| Evaluation on a golden dataset, run in CI | M3 | Planned |
-| Per-request traces, metrics and Grafana dashboards | M3 | Planned |
-| Hardware benchmarks and cost per million tokens, local versus cloud | M3 | Planned |
-| Planner, executor and reviewer agents with JSON contracts | M4 | Planned |
-| Prompt-injection and cross-user leakage test suites | M5 | Planned |
-| Terraform and Ansible deployment on Proxmox, tested backup and restore | M5 | Planned |
+| Serveurs de modèles llama.cpp sur deux GPU et sur CPU, derrière une passerelle Caddy avec TLS mutuel | M1 | En cours |
+| Recherche hybride (vectorielle et plein texte) avec reranking et réponses citées | M2 | Prévu |
+| Contrôle d'accès par utilisateur appliqué dans la requête de recherche | M2 | Prévu |
+| Évaluation sur un jeu de référence, lancée en CI | M3 | Prévu |
+| Traces par requête, métriques et tableaux de bord Grafana | M3 | Prévu |
+| Mesures matérielles et coût par million de jetons, local contre cloud | M3 | Prévu |
+| Agents planificateur, exécutant et relecteur avec contrats JSON | M4 | Prévu |
+| Suites de tests d'injection de prompt et de fuite entre utilisateurs | M5 | Prévu |
+| Déploiement Terraform et Ansible sur Proxmox, sauvegarde et restauration testées | M5 | Prévu |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    user([User]) -->|HTTPS| proxy[Reverse proxy]
+    user([Utilisateur]) -->|HTTPS| proxy[Reverse proxy]
     proxy --> ui[Open WebUI]
-    ui --> orch[Orchestrator API]
-    orch --> retr[Retrieval<br/>ACL, hybrid search, rerank]
+    ui --> orch[API d'orchestration]
+    orch --> retr[Recherche<br/>droits, recherche hybride, reranking]
     retr --> db[(PostgreSQL + pgvector)]
-    orch --> gw[Caddy gateway · mTLS]
+    orch --> gw[Passerelle Caddy · mTLS]
     retr --> gw
     gw --> llm[llama-server · RTX 3090]
-    gw --> emb[Embeddings and reranker · RTX 3060]
+    gw --> emb[Embeddings et reranker · RTX 3060]
     gw --> cpp[llama-server · CPU]
     orch -.-> obs[OpenTelemetry · Prometheus · Grafana]
 ```
 
-Details, data flows and design choices: [architecture](docs/architecture.md)
-and [decision records](docs/adr/).
+Détails, flux de données et choix de conception :
+[architecture](docs/architecture.md) et
+[décisions d'architecture](docs/adr/).
 
 ## Homelab
 
-| Role | Hardware |
+| Rôle | Matériel |
 |---|---|
-| GPU hypervisor | Intel Core i5-14400F, 32 GB DDR5, NVIDIA RTX 3090 (24 GB) and RTX 3060 (8 GB), Proxmox VE |
-| Main hypervisor | Dell PowerEdge R730, 2 × Intel Xeon E5-2680 v4, 96 GB RAM, Proxmox VE |
-| Firewall and inter-VLAN routing | Fortinet FortiGate 40F |
+| Hyperviseur GPU | Intel Core i5-14400F, 32 Go de DDR5, NVIDIA RTX 3090 (24 Go) et RTX 3060 (8 Go), Proxmox VE |
+| Hyperviseur principal | Dell PowerEdge R730, 2 × Intel Xeon E5-2680 v4, 96 Go de mémoire, Proxmox VE |
+| Pare-feu et routage entre VLAN | Fortinet FortiGate 40F |
 | Switch | Cisco CBS250 |
 
-Management, servers and IoT are separate VLANs with default-deny routing
-between them. Nothing is exposed to the internet.
+Administration, serveurs et objets connectés sont dans des VLAN séparés, et
+tout flux entre eux est refusé par défaut. Rien n'est exposé sur internet.
 
-## Results
+## Résultats
 
-Every result is produced by a script in this repository and published with
-the hardware, model, settings and commit used.
+Chaque résultat est produit par un script de ce dépôt et publié avec le
+matériel, le modèle, les réglages et le commit utilisés.
 
-- [Power limit, RTX 3090](benchmarks/power-limit/): at 300 W instead of
-  350 W, generation is 2.9 % slower for 8.8 % less power.
+- [Limite de puissance, RTX 3090](benchmarks/power-limit/) : à 300 W au lieu
+  de 350 W, la génération est 2,9 % plus lente pour 8,8 % de puissance en
+  moins.
 
-Evaluation scores will follow in milestone M3.
+Les scores d'évaluation suivront au jalon M3.
 
-## Getting started
+## Démarrage
 
-Not available yet. The quickstart arrives with milestone M1 and will run on a
-machine without a GPU.
+Pas encore disponible. Le démarrage rapide arrive avec le jalon M1 et
+tournera sur une machine sans GPU.
 
 ## Documentation
 
-- [Use case](docs/use-case.md)
-- [Roadmap to v1](docs/roadmap.md) and [long-term roadmap](docs/roadmap-long-term.md)
+- [Cas d'usage](docs/use-case.md)
+- [Feuille de route vers la v1](docs/roadmap.md) et [feuille de route à long terme](docs/roadmap-long-term.md)
 - [Architecture](docs/architecture.md)
-- [Delegated worker loop](docs/delegated-loop.md): how the project is built with local and remote models
-- [Architecture decision records](docs/adr/)
-- [Idea backlog](docs/ideas.md)
-- [Changelog](CHANGELOG.md)
+- [Runbook de l'hôte GPU](docs/runbooks/gpu-host.md)
+- [Boucle de travail déléguée](docs/delegated-loop.md) : comment le projet est construit avec des modèles locaux et distants
+- [Décisions d'architecture](docs/adr/)
+- [Réserve d'idées](docs/ideas.md)
+- [Journal des modifications](CHANGELOG.md)
 
-## Contributing and security
+## Contribution et sécurité
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Please report vulnerabilities
-privately, as described in [SECURITY.md](SECURITY.md).
+Voir [CONTRIBUTING.md](CONTRIBUTING.md). Merci de signaler les vulnérabilités
+en privé, comme indiqué dans [SECURITY.md](SECURITY.md).
 
-## License
+## Licence
 
-[Apache License 2.0](LICENSE).
+[Licence Apache 2.0](LICENSE).

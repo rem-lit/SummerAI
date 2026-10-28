@@ -1,41 +1,49 @@
-# 3. LiteLLM as the model gateway
+# 3. LiteLLM comme passerelle des modèles
 
-- **Status:** Superseded by [ADR 0008](0008-gateway-caddy-mtls.md)
-- **Date:** 2026-10-13
+- **Statut :** Remplacée par l'[ADR 0008](0008-gateway-caddy-mtls.md)
+- **Date :** 2026-10-13
 
-## Context
+## Contexte
 
-- Several inference backends will coexist: vLLM, llama.cpp, and later a
-  managed cloud model service ([roadmap](../roadmap.md)).
-- Model servers have no meaningful authentication of their own and should not
-  be reachable by clients.
-- Usage, latency and errors must be measured per client and per model.
+- Plusieurs moteurs d'inférence vont coexister : vLLM, llama.cpp et, plus
+  tard, un service de modèles managé dans le cloud
+  ([feuille de route](../roadmap.md)).
+- Les serveurs de modèles n'ont pas d'authentification digne de ce nom et ne
+  doivent pas être joignables par les clients.
+- L'usage, la latence et les erreurs doivent être mesurés par client et par
+  modèle.
 
-## Decision
+## Décision
 
-All model traffic goes through a **LiteLLM proxy** exposing the OpenAI API:
+Tout le trafic vers les modèles passe par un **proxy LiteLLM** qui expose
+l'API OpenAI :
 
-- one API key per client (Open WebUI, orchestrator, evaluation, benchmarks);
-- routing by model name to the right backend, with fallback between profiles;
-- usage and latency logged per key and per model.
+- une clé d'API par client (Open WebUI, orchestrateur, évaluation, mesures) ;
+- un routage par nom de modèle vers le bon moteur, avec repli entre profils ;
+- l'usage et la latence journalisés par clé et par modèle.
 
-Model servers only accept traffic from the gateway, enforced by the host
-firewall.
+Les serveurs de modèles n'acceptent que le trafic venant de la passerelle,
+ce qu'impose le pare-feu de l'hôte.
 
-## Consequences
+## Conséquences
 
-- Clients depend on one stable API; backends can change freely.
-- Adding the cloud variant after v1 is a configuration change in the gateway.
-- One more network hop. Its overhead is measured in the benchmarks.
-- The gateway stores keys and usage in a database; it gets its own database
-  in the same PostgreSQL instance as retrieval.
-- The gateway handles credentials and sees all prompts, so its container image
-  is pinned by digest and upgrades are reviewed.
+- Les clients dépendent d'une seule API stable ; les moteurs peuvent changer
+  librement.
+- Ajouter la variante cloud après la v1 se résume à un changement de
+  configuration de la passerelle.
+- Un saut réseau de plus. Son surcoût fait partie des mesures.
+- La passerelle stocke les clés et l'usage dans une base de données ; elle a
+  sa propre base dans la même instance PostgreSQL que la recherche
+  documentaire.
+- La passerelle manipule des identifiants et voit tous les prompts : son image
+  de conteneur est donc épinglée par empreinte (digest) et ses mises à jour
+  sont relues.
 
-## Alternatives considered
+## Options envisagées
 
-- **No gateway**: each client talks to each backend; no central
-  authentication or usage tracking.
-- **Custom router**: full control, but rebuilds what LiteLLM already provides.
-- **Kubernetes-native gateways**: relevant once the platform moves to
-  Kubernetes (long-term roadmap), not for a Docker Compose v1.
+- **Pas de passerelle** : chaque client parle à chaque moteur ; aucune
+  authentification centrale ni suivi de l'usage.
+- **Routeur maison** : contrôle total, mais refait ce que LiteLLM fournit déjà.
+- **Passerelles natives Kubernetes** : pertinentes quand la plateforme passera
+  sur Kubernetes (feuille de route à long terme), pas pour une v1 sous Docker
+  Compose.

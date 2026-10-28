@@ -1,171 +1,183 @@
 # Architecture
 
-> **Status:** target design for v1. No component is deployed yet; each section
-> says which [milestone](roadmap.md) delivers it.
+> **État :** conception cible de la v1. Aucun composant n'est encore déployé ;
+> chaque section indique quel [jalon](roadmap.md) le livre.
 
-## Goals
+## Objectifs
 
-- Answer questions over a private document corpus with **citations**, using
-  models that run on hardware the operator controls.
-- Enforce **who can read what** inside retrieval, not only in the UI.
-- Expose models through **one authenticated gateway**, with mutual TLS for
-  machine clients, so backends can change without touching clients.
-- Make quality and performance **measurable**: evaluation, traces, metrics and
-  benchmarks are part of the system, not an afterthought.
+- Répondre aux questions sur un corpus documentaire privé avec des
+  **citations**, à l'aide de modèles qui tournent sur un matériel que
+  l'opérateur maîtrise.
+- Appliquer **qui peut lire quoi** dans la recherche documentaire elle-même,
+  pas seulement dans l'interface.
+- Exposer les modèles via **une seule passerelle authentifiée**, avec TLS
+  mutuel pour les clients machines, afin de pouvoir changer les backends sans
+  toucher aux clients.
+- Rendre la qualité et les performances **mesurables** : évaluation, traces,
+  métriques et mesures font partie du système, pas d'un ajout après coup.
 
-## Logical architecture
+## Architecture logique
 
 ```mermaid
 flowchart LR
-    user([User]) -->|HTTPS| proxy[Caddy<br/>TLS and authentication]
+    user([Utilisateur]) -->|HTTPS| proxy[Caddy<br/>TLS et authentification]
     proxy --> ui[Open WebUI]
-    ui -->|OpenAI API and user identity| orch[Orchestrator API]
-    orch --> retr[Retrieval<br/>ACL filter, hybrid search, rerank]
-    retr --> db[(PostgreSQL<br/>pgvector and full-text)]
-    orch --> agents[Planner, executor, reviewer]
-    agents --> tools[Allow-listed tools]
-    orch -->|mTLS| gw[Caddy model gateway]
+    ui -->|API OpenAI et identité de l'utilisateur| orch[API d'orchestration]
+    orch --> retr[Recherche documentaire<br/>filtre ACL, recherche hybride, reranking]
+    retr --> db[(PostgreSQL<br/>pgvector et plein texte)]
+    orch --> agents[Planificateur, exécutant, relecteur]
+    agents --> tools[Outils en liste d'autorisation]
+    orch -->|mTLS| gw[Passerelle de modèles Caddy]
     agents --> gw
     retr --> gw
-    gw --> llm[llama-server · main model<br/>RTX 3090]
-    gw --> emb[llama-server · embeddings and reranker<br/>RTX 3060]
-    gw --> cpp[llama-server · small model<br/>CPU]
-    src[/Documents/] --> ingest[Ingestion worker<br/>parse, chunk, embed]
+    gw --> llm[llama-server · modèle principal<br/>RTX 3090]
+    gw --> emb[llama-server · embeddings et reranker<br/>RTX 3060]
+    gw --> cpp[llama-server · petit modèle<br/>CPU]
+    src[/Documents/] --> ingest[Exécutant d'ingestion<br/>analyse, découpage, embeddings]
     ingest --> db
-    ingest --> raw[(Raw document store)]
-    orch -.->|traces| otel[OpenTelemetry collector]
-    llm -.->|metrics| prom[Prometheus]
+    ingest --> raw[(Stockage des documents bruts)]
+    orch -.->|traces| otel[Collecteur OpenTelemetry]
+    llm -.->|métriques| prom[Prometheus]
     otel -.-> grafana[Grafana]
     prom -.-> grafana
 ```
 
-### Query path
+### Chemin d'une requête
 
-1. The reverse proxy terminates TLS and authenticates the user.
-2. Open WebUI sends the conversation to the orchestrator through the OpenAI
-   API, together with the user identity.
-3. The orchestrator asks the retrieval service for context. Retrieval applies
-   the user's access rights **in the database query**, then runs vector and
-   full-text search, fuses the results and reranks them.
-4. The orchestrator generates the answer through the gateway, either directly
-   or through the agent layer, and returns it with citations.
-5. Each step emits a trace span; the gateway and model servers expose
-   metrics.
+1. Le reverse proxy termine le TLS et authentifie l'utilisateur.
+2. Open WebUI envoie la conversation à l'orchestrateur via l'API OpenAI, avec
+   l'identité de l'utilisateur.
+3. L'orchestrateur demande du contexte au service de recherche documentaire.
+   Celui-ci applique les droits d'accès de l'utilisateur **dans la requête à
+   la base de données**, puis lance une recherche vectorielle et une recherche
+   plein texte, fusionne les résultats et les reclasse (reranking).
+4. L'orchestrateur génère la réponse via la passerelle, directement ou via la
+   couche d'agents, et la renvoie avec ses citations.
+5. Chaque étape émet un span de trace ; la passerelle et les serveurs de
+   modèles exposent des métriques.
 
-### Ingestion path
+### Chemin d'ingestion
 
-1. A document is submitted with its access rights.
-2. The worker stores the original, extracts text, chunks it with the
-   configured strategy and computes embeddings.
-3. Chunks, embeddings, metadata, version and access rights are written in one
-   transaction. A new version of a document replaces the previous chunks.
+1. Un document est soumis avec ses droits d'accès.
+2. L'exécutant stocke l'original, extrait le texte, le découpe selon la
+   stratégie configurée et calcule les embeddings.
+3. Les fragments, embeddings, métadonnées, version et droits d'accès sont
+   écrits dans une seule transaction. Une nouvelle version d'un document
+   remplace les fragments précédents.
 
-## Components
+## Composants
 
-| Component | Technology | Role | Milestone |
+| Composant | Technologie | Rôle | Jalon |
 |---|---|---|---|
-| Reverse proxy and model gateway | Caddy | TLS, user authentication, mutual TLS for machine clients, routing, limits | M1 ([ADR 0008](adr/0008-gateway-caddy-mtls.md)) |
-| Chat UI | Open WebUI | User interface | M2 |
-| Orchestrator API | Python, FastAPI | OpenAI-compatible endpoint, retrieval, generation, citations | M2 |
-| Retrieval store | PostgreSQL with pgvector | Vectors, full-text index, documents, versions, ACLs | M2 ([ADR 0004](adr/0004-retrieval-store.md)) |
-| Ingestion worker | Python | Parsing, chunking, embeddings, versioning | M2 |
-| Main model | llama.cpp `llama-server` | Chat and agent model on the RTX 3090 | M1 ([ADR 0006](adr/0006-llama-server-runtime.md), [ADR 0007](adr/0007-one-lxc-per-gpu.md)) |
-| Embeddings and reranker | llama.cpp `llama-server` | Encode chunks and queries, rerank candidates, on the RTX 3060; models chosen by evaluation | M2 ([ADR 0006](adr/0006-llama-server-runtime.md)) |
-| CPU inference | llama.cpp `llama-server` | Small model for the quickstart without GPU, and background jobs on the R730 | M1 ([ADR 0006](adr/0006-llama-server-runtime.md)) |
-| Agent layer | Python, typed JSON schemas | Planner, executor, reviewer, tool allow-list | M4 |
-| Observability | OpenTelemetry, Prometheus, Grafana | Traces, metrics, dashboards, alerts | M3 |
-| Evaluation | Python | Golden dataset, retrieval and generation metrics | M3 |
+| Reverse proxy et passerelle de modèles | Caddy | TLS, authentification des utilisateurs, TLS mutuel pour les clients machines, routage, limites | M1 ([ADR 0008](adr/0008-gateway-caddy-mtls.md)) |
+| Interface de chat | Open WebUI | Interface utilisateur | M2 |
+| API d'orchestration | Python, FastAPI | Point d'accès compatible OpenAI, recherche documentaire, génération, citations | M2 |
+| Stockage de recherche | PostgreSQL avec pgvector | Vecteurs, index plein texte, documents, versions, ACL | M2 ([ADR 0004](adr/0004-retrieval-store.md)) |
+| Exécutant d'ingestion | Python | Analyse, découpage, embeddings, gestion des versions | M2 |
+| Modèle principal | llama.cpp `llama-server` | Modèle de chat et d'agents sur la RTX 3090 | M1 ([ADR 0006](adr/0006-llama-server-runtime.md), [ADR 0007](adr/0007-one-lxc-per-gpu.md)) |
+| Embeddings et reranker | llama.cpp `llama-server` | Encoder fragments et requêtes, reclasser les candidats, sur la RTX 3060 ; modèles choisis par évaluation | M2 ([ADR 0006](adr/0006-llama-server-runtime.md)) |
+| Inférence CPU | llama.cpp `llama-server` | Petit modèle pour le démarrage rapide sans GPU, et tâches de fond sur le R730 | M1 ([ADR 0006](adr/0006-llama-server-runtime.md)) |
+| Couche d'agents | Python, schémas JSON typés | Planificateur, exécutant, relecteur, liste d'autorisation des outils | M4 |
+| Observabilité | OpenTelemetry, Prometheus, Grafana | Traces, métriques, tableaux de bord, alertes | M3 |
+| Évaluation | Python | Jeu de référence, métriques de recherche documentaire et de génération | M3 |
 
 ## Infrastructure
 
-SummerAI runs in a homelab built like a small production network: segmented
-VLANs, a firewall that routes and filters between them, and two Proxmox VE
-hypervisors.
+SummerAI tourne dans un homelab construit comme un petit réseau de production :
+VLAN segmentés, un pare-feu qui route et filtre entre eux, et deux
+hyperviseurs Proxmox VE.
 
-### Hardware
+### Matériel
 
-| Host | Role | CPU | RAM | GPU | Storage |
+| Hôte | Rôle | CPU | RAM | GPU | Stockage |
 |---|---|---|---|---|---|
-| `merlin` | GPU hypervisor (tower PC) | Intel Core i5-14400F, 10 cores (6 performance, 4 efficient) | 32 GB DDR5 | NVIDIA RTX 3090, 24 GB, and RTX 3060, 8 GB | Over 2 TB (NVMe, SSD, HDD) |
-| `kaamelott` | Main hypervisor (Dell PowerEdge R730) | 2 × Intel Xeon E5-2680 v4, 28 cores | 96 GB DDR4 ECC | None | 2.4 TB, hardware RAID 5 |
-| `lancelot` | Firewall, inter-VLAN routing, DHCP, internal DNS (Fortinet FortiGate 40F) | — | — | — | — |
-| `bohort` | Switch (Cisco CBS250, 16 × 1 GbE and 2 × SFP) | — | — | — | — |
+| `merlin` | Hyperviseur GPU (PC tour) | Intel Core i5-14400F, 10 cœurs (6 performance, 4 efficaces) | 32 Go DDR5 | NVIDIA RTX 3090, 24 Go, et RTX 3060, 8 Go | Plus de 2 To (NVMe, SSD, HDD) |
+| `kaamelott` | Hyperviseur principal (Dell PowerEdge R730) | 2 × Intel Xeon E5-2680 v4, 28 cœurs | 96 Go DDR4 ECC | Aucun | 2,4 To, RAID 5 matériel |
+| `lancelot` | Pare-feu, routage inter-VLAN, DHCP, DNS interne (Fortinet FortiGate 40F) | — | — | — | — |
+| `bohort` | Commutateur (Cisco CBS250, 16 × 1 GbE et 2 × SFP) | — | — | — | — |
 
-Both hypervisors run Proxmox VE. The R730 also has out-of-band management
-(iDRAC).
+Les deux hyperviseurs tournent sous Proxmox VE. Le R730 dispose aussi d'une
+gestion hors bande (iDRAC).
 
-Hosts are named after characters of the French TV series *Kaamelott*.
+Les hôtes portent des noms de personnages de la série télévisée française
+*Kaamelott*.
 
-### Network
+### Réseau
 
 ```mermaid
 flowchart TB
-    internet((Internet)) --- isp[ISP router]
-    isp ---|WAN, no management| fw[Firewall · FortiGate 40F]
-    fw ---|802.1Q trunk| sw[Switch · Cisco CBS250]
-    sw --- mgmt[VLAN 10 · Management]
-    sw --- srv[VLAN 20 · Servers]
+    internet((Internet)) --- isp[Box du FAI]
+    isp ---|WAN, sans administration| fw[Pare-feu · FortiGate 40F]
+    fw ---|Trunk 802.1Q| sw[Commutateur · Cisco CBS250]
+    sw --- mgmt[VLAN 10 · Administration]
+    sw --- srv[VLAN 20 · Serveurs]
     sw --- iot[VLAN 30 · IoT]
-    mgmt --- hv[Hypervisor management<br/>admin workstation]
-    srv --- vms[SummerAI virtual machines]
+    mgmt --- hv[Administration des hyperviseurs<br/>poste d'administration]
+    srv --- vms[Machines virtuelles SummerAI]
 ```
 
-| Zone | Purpose |
+| Zone | Usage |
 |---|---|
-| VLAN 10, Management | Hypervisor and network device management, admin workstation |
-| VLAN 20, Servers | Virtual machines and services, including SummerAI |
-| VLAN 30, IoT | Connected devices, isolated from the rest |
-| Unused native VLAN | Native VLAN of every trunk and unused port; carries no traffic |
-| Recovery network | Untagged, out-of-band access to the firewall only |
+| VLAN 10, Administration | Administration des hyperviseurs et des équipements réseau, poste d'administration |
+| VLAN 20, Serveurs | Machines virtuelles et services, dont SummerAI |
+| VLAN 30, IoT | Objets connectés, isolés du reste |
+| VLAN natif inutilisé | VLAN natif de chaque trunk et de chaque port inutilisé ; ne transporte aucun trafic |
+| Réseau de secours | Non tagué, accès hors bande au pare-feu uniquement |
 
-Principles already in place:
+Principes déjà en place :
 
-- Traffic between VLANs is **denied by default**; each flow needs an explicit,
-  logged firewall rule.
-- Management is only reachable from the management VLAN, never from the WAN.
-- Only encrypted management protocols (SSH, HTTPS); Telnet and HTTP are off.
-- Unused switch ports are disabled and parked in the unused VLAN.
-- Hypervisors accept SSH keys only; the web UI requires two-factor
-  authentication.
-- Network device configurations are backed up daily and versioned.
-- Nothing is exposed to the internet. Remote access will go through a
-  WireGuard VPN.
+- Le trafic entre VLAN est **refusé par défaut** ; chaque flux nécessite une
+  règle de pare-feu explicite et journalisée.
+- L'administration n'est joignable que depuis le VLAN d'administration, jamais
+  depuis le WAN.
+- Uniquement des protocoles d'administration chiffrés (SSH, HTTPS) ; Telnet et
+  HTTP sont désactivés.
+- Les ports inutilisés du commutateur sont désactivés et placés dans le VLAN
+  inutilisé.
+- Les hyperviseurs n'acceptent que les clés SSH ; l'interface web exige une
+  authentification à deux facteurs.
+- Les configurations des équipements réseau sont sauvegardées chaque jour et
+  versionnées.
+- Rien n'est exposé à Internet. L'accès distant passera par un VPN WireGuard.
 
-### Proposed placement
+### Placement proposé
 
-| Guest | Type | Host | Runs |
+| Invité | Type | Hôte | Exécute |
 |---|---|---|---|
-| LLM | LXC, RTX 3090 | `merlin` | `llama-server` with the main model, local Caddy |
-| Retrieval models | LXC, RTX 3060 | `merlin` | `llama-server` for embeddings and for the reranker, local Caddy |
-| Platform | VM | `kaamelott` | Caddy gateway, Open WebUI, orchestrator, retrieval, PostgreSQL, ingestion |
-| Batch worker | VM | `kaamelott` | CPU `llama-server` and background jobs (bulk ingestion, asynchronous agents) |
-| Observability | VM | `kaamelott` | Prometheus, Grafana, log storage |
+| LLM | LXC, RTX 3090 | `merlin` | `llama-server` avec le modèle principal, Caddy local |
+| Modèles de recherche | LXC, RTX 3060 | `merlin` | `llama-server` pour les embeddings et pour le reranker, Caddy local |
+| Plateforme | VM | `kaamelott` | Passerelle Caddy, Open WebUI, orchestrateur, recherche documentaire, PostgreSQL, ingestion |
+| Exécutant de traitements par lots | VM | `kaamelott` | `llama-server` CPU et tâches de fond (ingestion en masse, agents asynchrones) |
+| Observabilité | VM | `kaamelott` | Prometheus, Grafana, stockage des journaux |
 
-Each GPU has one role and one container ([ADR 0007](adr/0007-one-lxc-per-gpu.md)).
-Everything that does not need a GPU runs on `kaamelott`, which has far more
-memory.
+Chaque GPU a un rôle et un conteneur ([ADR 0007](adr/0007-one-lxc-per-gpu.md)).
+Tout ce qui n'a pas besoin de GPU tourne sur `kaamelott`, qui a beaucoup plus
+de mémoire.
 
-All guests sit in VLAN 20. Traffic between them stays inside the VLAN and does
-not cross the firewall, so each guest runs a host firewall that only accepts
-the flows it needs: the model servers only accept the gateway, over mutual
-TLS ([ADR 0008](adr/0008-gateway-caddy-mtls.md)).
+Tous les invités sont dans le VLAN 20. Le trafic entre eux reste dans le VLAN
+et ne traverse pas le pare-feu : chaque invité exécute donc un pare-feu local
+qui n'accepte que les flux dont il a besoin. Les serveurs de modèles
+n'acceptent que la passerelle, en TLS mutuel
+([ADR 0008](adr/0008-gateway-caddy-mtls.md)).
 
-Flows to add to the firewall flow matrix:
+Flux à ajouter à la matrice de flux du pare-feu :
 
-| From | To | Port | Purpose |
+| Source | Destination | Port | Usage |
 |---|---|---|---|
-| Management VLAN | Platform VM | 443/tcp | UI and API |
-| Management VLAN | SummerAI VMs | 22/tcp | Administration, Ansible |
-| SummerAI VMs | Internet | 443/tcp | Container images, packages, model downloads |
+| VLAN d'administration | VM Plateforme | 443/tcp | Interface et API |
+| VLAN d'administration | VM SummerAI | 22/tcp | Administration, Ansible |
+| VM SummerAI | Internet | 443/tcp | Images de conteneurs, paquets, téléchargement des modèles |
 
-## Open questions
+## Questions ouvertes
 
-- **GPU host kernel and driver**: Proxmox VE 9.2 ships kernel 7.0 by default,
-  and users report NVIDIA driver problems with it on RTX 30-series cards. The
-  host runs a pinned 6.17 kernel, validated with both cards
-  ([runbook](runbooks/gpu-host.md)), until 7.0 is confirmed.
-- **Raw document store**: an S3-compatible service or a plain volume. The
-  distribution model of MinIO's community edition changed in 2025 and needs
-  checking; Garage and SeaweedFS are alternatives.
-- **Time synchronisation**: NTP is not configured on every device yet; it is
-  needed to correlate traces and logs.
+- **Noyau et pilote de l'hôte GPU** : Proxmox VE 9.2 fournit par défaut le
+  noyau 7.0, et des utilisateurs signalent des problèmes de pilote NVIDIA avec
+  ce noyau sur les cartes RTX série 30. L'hôte utilise un noyau 6.17 épinglé,
+  validé avec les deux cartes ([runbook](runbooks/gpu-host.md)), jusqu'à ce
+  que le 7.0 soit confirmé.
+- **Stockage des documents bruts** : un service compatible S3 ou un simple
+  volume. Le modèle de distribution de l'édition communautaire de MinIO a
+  changé en 2025 et doit être vérifié ; Garage et SeaweedFS sont des
+  alternatives.
+- **Synchronisation de l'heure** : NTP n'est pas encore configuré sur tous les
+  équipements ; il est nécessaire pour corréler traces et journaux.
