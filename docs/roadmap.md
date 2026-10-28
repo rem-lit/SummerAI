@@ -1,187 +1,204 @@
-# Roadmap to v1
+# Feuille de route vers la v1
 
-v1 is the first public release: a self-hosted RAG assistant with citations,
-per-user access control, a small agent layer, measured quality and
-performance, and a documented, reproducible deployment.
+La v1 est la première version publique : un assistant RAG auto-hébergé avec
+citations, contrôle d'accès par utilisateur, une petite couche d'agents, une
+qualité et des performances mesurées, et un déploiement documenté et
+reproductible. Elle sert aussi de base aux installations réalisées pour des
+entreprises.
 
-Work after v1 is described in [`roadmap-long-term.md`](roadmap-long-term.md).
+La suite après la v1 est décrite dans la
+[feuille de route à long terme](roadmap-long-term.md).
 
-## Principles
+## Principes
 
-- **Vertical slice first.** A thin end-to-end path (model, retrieval,
-  evaluation) comes before any optimisation, so every later change is measured
-  against a baseline.
-- **Measured, not claimed.** Every score or benchmark in this repository comes
-  from a script in this repository.
-- **Security from the first milestone.** Authentication, access control and
-  tool isolation are built in as each layer is added, not bolted on at the
-  end.
-- **Always presentable.** Each pull request keeps the README status accurate.
+- **D'abord une tranche verticale.** Un chemin complet minimal (modèle,
+  recherche, évaluation) passe avant toute optimisation, pour que chaque
+  changement suivant soit mesuré par rapport à une référence.
+- **Mesuré, pas affirmé.** Chaque score ou mesure de ce dépôt vient d'un script
+  de ce dépôt.
+- **La sécurité dès le premier jalon.** Authentification, contrôle d'accès et
+  isolation des outils sont intégrés au fur et à mesure que chaque couche est
+  ajoutée, pas rajoutés à la fin.
+- **Toujours présentable.** Chaque pull request garde l'état du README exact.
+- **Reproductible ailleurs.** Ce qui tourne dans le homelab doit pouvoir être
+  réinstallé sur une autre infrastructure à partir du dépôt.
 
-## Milestones
+## Jalons
 
-| Milestone | Scope | Status |
+| Jalon | Périmètre | État |
 |---|---|---|
-| M0 Foundation | Repository standards, roadmap, architecture, decision records, use case | In review |
-| M1 Model serving | Inference backends behind an authenticated OpenAI-compatible gateway | In progress |
-| M2 Retrieval | Hybrid RAG with citations, per-user access control, asynchronous ingestion | Not started |
-| M3 Measurement | Evaluation harness, observability, hardware benchmarks | Not started |
-| M4 Agents | Planner, executor and reviewer with JSON contracts and restricted tools | Not started |
-| M5 Security and operations | Hardening, security tests, infrastructure as code, backup and restore | Not started |
-| M6 Release | v1.0.0 | Not started |
+| M0 Fondations | Règles du dépôt, feuille de route, architecture, décisions d'architecture, cas d'usage | En revue |
+| M1 Service des modèles | Moteurs d'inférence derrière une passerelle authentifiée compatible OpenAI | En cours |
+| M2 Recherche | RAG hybride avec citations, contrôle d'accès par utilisateur, ingestion asynchrone | Pas commencé |
+| M3 Mesure | Banc d'évaluation, observabilité, mesures matérielles | Pas commencé |
+| M4 Agents | Planificateur, exécutant et relecteur avec contrats JSON et outils restreints | Pas commencé |
+| M5 Sécurité et exploitation | Durcissement, tests de sécurité, infrastructure as code, sauvegarde et restauration | Pas commencé |
+| M6 Publication | v1.0.0 | Pas commencé |
 
-### M0 Foundation
+### M0 Fondations
 
-- Repository standards: licence, security policy, contribution guide, CI with
-  secret scanning.
-- This roadmap, the [architecture](architecture.md) and the
-  [decision records](adr/).
-- [Use case and corpus](use-case.md): problem, users, data, success
-  criteria.
+- Règles du dépôt : licence, politique de sécurité, guide de contribution, CI
+  avec recherche de secrets.
+- Cette feuille de route, l'[architecture](architecture.md) et les
+  [décisions d'architecture](adr/).
+- [Cas d'usage et corpus](use-case.md) : problème, utilisateurs, données,
+  critères de réussite.
 
-**Done when** the use case is confirmed and the architecture reflects it.
+**Terminé quand** le cas d'usage est confirmé et que l'architecture en tient
+compte.
 
-### M1 Model serving
+### M1 Service des modèles
 
-- Host kernel pinned, NVIDIA driver on the host, one LXC container per GPU
+- Noyau de l'hôte épinglé, pilote NVIDIA sur l'hôte, un conteneur LXC par GPU
   ([ADR 0007](adr/0007-one-lxc-per-gpu.md)).
-- llama.cpp built from a pinned release; `llama-server` serving the main
-  model on the RTX 3090, and a small model on CPU
+- llama.cpp compilé depuis une version épinglée ; `llama-server` sert le
+  modèle principal sur la RTX 3090, les modèles d'embeddings et de reranking
+  sur la RTX 3060, et un petit modèle sur CPU
   ([ADR 0006](adr/0006-llama-server-runtime.md)).
-- RTX 3090 power limit applied at boot; `llama-bench` measured at several
-  limits.
-- Caddy gateway with mutual TLS, one certificate and key per client, and no
-  unauthenticated endpoint ([ADR 0008](adr/0008-gateway-caddy-mtls.md)).
-- A Docker Compose profile for anyone without a GPU, using the same runtime.
+- Limite de puissance de la RTX 3090 appliquée au démarrage ; `llama-bench`
+  mesuré à plusieurs limites.
+- Passerelle Caddy avec TLS mutuel, un certificat et une clé par client, et
+  aucun point d'accès sans authentification
+  ([ADR 0008](adr/0008-gateway-caddy-mtls.md)).
+- Un profil Docker Compose pour qui n'a pas de GPU, avec le même moteur.
 
-**Done when** a client with a valid certificate can chat through the gateway,
-a client without one is refused, and a smoke test runs in CI against the CPU
-profile.
+**Terminé quand** un client muni d'un certificat valide peut discuter avec le
+modèle à travers la passerelle, qu'un client sans certificat est refusé, et
+qu'un smoke test tourne en CI sur le profil CPU.
 
-### M2 Retrieval
+### M2 Recherche
 
-- Ingestion of the corpus with configurable chunking and embeddings.
-- Hybrid search (vector and full-text, fused with reciprocal rank fusion),
-  then a reranker ([ADR 0004](adr/0004-retrieval-store.md)).
-- Answers cite their sources.
-- An OpenAI-compatible endpoint, used by Open WebUI as its model.
-- **Per-user access control** enforced inside the retrieval query, with the
-  user identity propagated from the UI.
-- Asynchronous ingestion worker, document versioning by content hash, and a
-  re-indexing strategy.
+- Ingestion du corpus avec découpage et embeddings configurables.
+- Recherche hybride (vectorielle et plein texte, fusionnées par *reciprocal
+  rank fusion*), puis un reranker ([ADR 0004](adr/0004-retrieval-store.md)).
+- Les réponses citent leurs sources.
+- Un point d'accès compatible OpenAI, utilisé par Open WebUI comme modèle.
+- **Contrôle d'accès par utilisateur** appliqué dans la requête de recherche
+  elle-même, avec l'identité de l'utilisateur transmise depuis l'interface.
+- Ingestion asynchrone, versionnement des documents par empreinte du contenu,
+  et stratégie de réindexation.
 
-**Done when** automated tests show that a user never retrieves a chunk from a
-document they are not allowed to read, and every answer carries citations.
+**Terminé quand** des tests automatisés montrent qu'un utilisateur n'obtient
+jamais un extrait d'un document qu'il n'a pas le droit de lire, et que chaque
+réponse porte des citations.
 
-### M3 Measurement
+### M3 Mesure
 
-- A golden dataset of at least 50 questions, written and checked by hand.
-- `make eval`: retrieval metrics (recall@k, MRR, nDCG) run in CI; generation
-  metrics (faithfulness, answer relevancy, citation accuracy) run on the
-  homelab, with results committed alongside the commit, model and settings
-  used.
-- Per-request traces; metrics for latency, time to first token, tokens per
-  second, error rate, GPU utilisation and memory; Grafana dashboards and basic
-  alerts exported to `observability/`.
-- Benchmarks in `benchmarks/`: generation and prompt speed at several context
-  sizes and power limits, time to first token, VRAM, power draw, cost per
-  million tokens compared with a cloud API, and vLLM as a baseline under
-  concurrent load.
+- Un jeu de référence d'au moins 50 questions, écrites et vérifiées à la main.
+- `make eval` : les métriques de recherche (recall@k, MRR, nDCG) tournent en
+  CI ; les métriques de génération (fidélité, pertinence de la réponse,
+  exactitude des citations) tournent dans le homelab, et les résultats sont
+  versionnés avec le commit, le modèle et les réglages utilisés.
+- Traces par requête ; métriques de latence, délai jusqu'au premier jeton,
+  jetons par seconde, taux d'erreur, utilisation et mémoire des GPU ; tableaux
+  de bord Grafana et alertes de base exportés dans `observability/`.
+- Mesures dans `benchmarks/` : vitesse de génération et de traitement du
+  prompt pour plusieurs tailles de contexte et limites de puissance, délai
+  jusqu'au premier jeton, VRAM, consommation, coût par million de jetons
+  comparé à une API dans le cloud, et vLLM comme référence sous charge
+  concurrente.
 
-**Done when** the README shows real scores and benchmark numbers, each
-reproducible with a documented command.
+**Terminé quand** le README affiche de vrais scores et de vraies mesures,
+chacun reproductible par une commande documentée.
 
 ### M4 Agents
 
-- An orchestrator that delegates to a planner, an executor and a reviewer.
-- JSON contracts between agents, validated with typed schemas.
-- An allow-list of tools per agent, with least privilege.
-- An execution log per run.
-- A comparison with plain RAG on the golden dataset, for quality and latency.
+- Un orchestrateur qui délègue à un planificateur, un exécutant et un
+  relecteur.
+- Des contrats JSON entre agents, validés par des schémas typés.
+- Une liste d'autorisation d'outils par agent, avec le moindre privilège.
+- Un journal d'exécution par lancement.
+- Une comparaison avec un RAG simple sur le jeu de référence, en qualité et en
+  latence.
 
-**Done when** the agent layer is kept only where it measurably improves
-answers, and the trade-off is documented.
+**Terminé quand** la couche d'agents n'est gardée que là où elle améliore les
+réponses de façon mesurable, et que le compromis est documenté.
 
-### M5 Security and operations
+### M5 Sécurité et exploitation
 
-- Reverse proxy with TLS and authentication in front of every endpoint;
-  secrets management; audit logs for access and tool calls.
-- `docs/security.md`: threat model, controls in place, mapping to the
-  OWASP Top 10 for LLM Applications and to the ASD Essential Eight where
-  relevant.
-- Test suites for prompt injection (direct, and indirect through poisoned
-  documents) and for cross-user data leakage.
-- Terraform for the virtual machines and Ansible for configuration and
-  deployment, in `infra/`.
-- Network documentation: zones, flow matrix and firewall rules (sanitised).
-- Backup, and an automated restore into a fresh environment.
+- Reverse proxy avec TLS et authentification devant chaque point d'accès ;
+  gestion des secrets ; journaux d'audit des accès et des appels d'outils.
+- `docs/security.md` : modèle de menace, mesures en place, correspondance avec
+  l'OWASP Top 10 for LLM Applications et, quand c'est pertinent, avec le guide
+  d'hygiène informatique et le ReCyF de l'ANSSI.
+- Suites de tests pour l'injection de prompt (directe, et indirecte par des
+  documents piégés) et pour les fuites de données entre utilisateurs.
+- Terraform pour les machines virtuelles et Ansible pour la configuration et
+  le déploiement, dans `infra/`.
+- Documentation réseau : zones, matrice des flux et règles de pare-feu
+  (anonymisées).
+- Sauvegarde, et restauration automatisée dans un environnement neuf.
 
-**Done when** the security tests run in CI with documented results, and a
-restore reproduces the same retrieval scores as the original.
+**Terminé quand** les tests de sécurité tournent en CI avec des résultats
+documentés, et qu'une restauration reproduit les mêmes scores de recherche que
+l'original.
 
-### M6 Release
+### M6 Publication
 
-- README with architecture diagram, screenshots or a demo recording, and the
-  measured numbers.
-- Quickstart tested from a fresh clone on a machine without a GPU.
-- Tag `v1.0.0`.
+- README avec schéma d'architecture, captures d'écran ou démonstration
+  enregistrée, et les chiffres mesurés.
+- Démarrage rapide testé depuis un clone neuf sur une machine sans GPU.
+- Étiquette `v1.0.0`.
 
-## Parallel track: delegated worker loop
+## Piste parallèle : boucle de travail déléguée
 
-A development workflow, not a product milestone. Local models plan and verify,
-a remote worker produces patches, and deterministic checks decide. It is
-described in [the delegated worker loop](delegated-loop.md) and recorded in
-[ADR 0009](adr/0009-delegated-worker-loop.md).
+Une méthode de développement, pas un jalon du produit. Des modèles locaux
+planifient et vérifient, un exécutant distant produit des correctifs, et des
+vérifications déterministes tranchent. Elle est décrite dans
+[la boucle de travail déléguée](delegated-loop.md) et consignée dans
+l'[ADR 0009](adr/0009-delegated-worker-loop.md).
 
-| Date | Step |
+| Date | Étape |
 |---|---|
-| 2026-10-24 | Loop v0 working end to end |
-| 2026-10-24 to 2026-10-28 | Measured run on real tasks |
-| 2026-10-28 | Review of the measurements and decision on the next step |
+| 2026-10-24 | Boucle v0 fonctionnelle de bout en bout |
+| 2026-10-24 au 2026-10-28 | Lancement mesuré sur de vraies tâches |
+| 2026-10-28 | Revue des mesures et décision sur la suite |
 
-Related work items: supervision (journal, channel between models, Telegram),
-control plane, retrieval over the git repositories, and the repository
-baseline with review by other agents. They are tracked as issues #3 to #7.
+Travaux liés : supervision (journal, canal entre modèles, Telegram), plan de
+contrôle, recherche dans les dépôts git, et socle du dépôt avec revue par
+d'autres agents. Ils sont suivis dans les tickets #3 à #7.
 
-## Pull request sequence
+## Séquence des pull requests
 
-| # | Branch | Milestone | Scope |
+| # | Branche | Jalon | Périmètre |
 |---|---|---|---|
-| 1 | `chore/repo-foundation` | M0 | Licence, community files, CI, English documentation, use case |
-| 2 | `feat/inference-gateway` | M1 | GPU containers, llama.cpp, Caddy with mutual TLS, power limit, CPU Compose profile, smoke test |
-| 3 | `feat/rag-baseline` | M2 | Ingestion, hybrid search, reranker, citations, Open WebUI |
-| 4 | `feat/eval-harness` | M3 | Golden dataset, `make eval`, first scores |
-| 5 | `feat/access-control` | M2 | Document ACLs, identity propagation, leakage tests |
-| 6 | `feat/async-ingestion` | M2 | Worker, versioning, re-indexing |
-| 7 | `feat/observability` | M3 | Traces, metrics, dashboards, alerts |
-| 8 | `bench/inference` | M3 | Hardware benchmarks and cost comparison |
-| 9 | `feat/agent-orchestrator` | M4 | Agents, contracts, tool allow-list, comparison |
-| 10 | `security/hardening-tests` | M5 | Proxy, auth, secrets, audit logs, security tests |
-| 11 | `infra/iac-network` | M5 | Terraform, Ansible, network documentation |
-| 12 | `ops/backup-restore` | M5 | Backup and automated restore test |
-| 13 | `docs/v1-release` | M6 | Final README and release |
+| 1 | `chore/repo-foundation` | M0 | Licence, fichiers communautaires, CI, documentation, cas d'usage |
+| 2 | `feat/inference-gateway` | M1 | Conteneurs GPU, llama.cpp, limite de puissance, smoke tests (fusionnée, PR #9) |
+| 2 bis | `docs/fr-anssi-nis2` | M0 | Documentation en français, cas d'usage ANSSI et NIS 2 |
+| 2 ter | `feat/gateway-caddy` | M1 | Caddy avec TLS mutuel, profil Compose CPU, smoke test en CI |
+| 3 | `feat/rag-baseline` | M2 | Ingestion, recherche hybride, reranker, citations, Open WebUI |
+| 4 | `feat/eval-harness` | M3 | Jeu de référence, `make eval`, premiers scores |
+| 5 | `feat/access-control` | M2 | Droits d'accès des documents, transmission de l'identité, tests de fuite |
+| 6 | `feat/async-ingestion` | M2 | Ingestion asynchrone, versionnement, réindexation |
+| 7 | `feat/observability` | M3 | Traces, métriques, tableaux de bord, alertes |
+| 8 | `bench/inference` | M3 | Mesures matérielles et comparaison des coûts |
+| 9 | `feat/agent-orchestrator` | M4 | Agents, contrats, liste d'autorisation des outils, comparaison |
+| 10 | `security/hardening-tests` | M5 | Proxy, authentification, secrets, journaux d'audit, tests de sécurité |
+| 11 | `infra/iac-network` | M5 | Terraform, Ansible, documentation réseau |
+| 12 | `ops/backup-restore` | M5 | Sauvegarde et test de restauration automatisé |
+| 13 | `docs/v1-release` | M6 | README final et publication |
 
-The evaluation harness (4) lands right after the baseline (3) so that every
-later change is measured. Benchmarks (8) only depend on model serving (2) and
-can be done in parallel.
+Le banc d'évaluation (4) arrive juste après la référence (3) pour que chaque
+changement suivant soit mesuré. Les mesures matérielles (8) ne dépendent que
+du service des modèles (2) et peuvent avancer en parallèle.
 
-## After v1
+## Après la v1
 
-- **Cloud variant**: the same application against a managed model service,
-  with `docs/local-vs-cloud.md` comparing cost, latency, data privacy,
-  sovereignty and maintenance effort.
-- **Kubernetes**: a k3s deployment with a simple Helm chart.
+- **Variante cloud** : la même application avec un service de modèles géré,
+  et `docs/local-vs-cloud.md` qui compare coût, latence, confidentialité des
+  données, souveraineté et effort de maintenance.
+- **Kubernetes** : un déploiement k3s avec un chart Helm simple.
 
-## Definition of done for v1
+## Définition de « terminé » pour la v1
 
-- Someone who has never seen the project can clone it, follow the quickstart
-  and get a working RAG chat.
-- The README contains an architecture diagram, screenshots and real numbers:
-  RAG scores, latency and tokens per second.
-- The golden dataset and the evaluation script run with one command, and in
-  CI.
-- Security tests (prompt injection, isolation between users) are documented
-  with their results.
-- Per-user access rights are enforced in retrieval.
-- A backup and a restore have been tested.
-- No secret in the git history, checked in CI.
+- Quelqu'un qui n'a jamais vu le projet peut le cloner, suivre le démarrage
+  rapide et obtenir un chat RAG qui fonctionne.
+- Le README contient un schéma d'architecture, des captures d'écran et de vrais
+  chiffres : scores RAG, latence et jetons par seconde.
+- Le jeu de référence et le script d'évaluation se lancent en une commande, et
+  en CI.
+- Les tests de sécurité (injection de prompt, isolation entre utilisateurs)
+  sont documentés avec leurs résultats.
+- Les droits d'accès par utilisateur sont appliqués dans la recherche.
+- Une sauvegarde et une restauration ont été testées.
+- Aucun secret dans l'historique git, vérifié en CI.

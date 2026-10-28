@@ -1,24 +1,25 @@
-# 1. Record architecture decisions
+# 1. Consigner les décisions d'architecture
 
-- **Status:** Accepted
-- **Date:** 2026-10-13
+- **Statut :** Acceptée
+- **Date :** 2026-10-13
 
-## Context
+## Contexte
 
-SummerAI combines model serving, retrieval, agents, observability and
-infrastructure. Choices in one area constrain the others, and the reasons
-behind them are easy to forget.
+SummerAI réunit le service des modèles, la recherche documentaire, les agents,
+l'observabilité et l'infrastructure. Les choix faits dans un domaine
+contraignent les autres, et leurs raisons s'oublient vite.
 
-## Decision
+## Décision
 
-Significant decisions are recorded as short Architecture Decision Records in
-`docs/adr/`, following Michael Nygard's format: context, decision,
-consequences. Records are numbered and never deleted; a decision that changes
-gets a new record that supersedes the old one.
+Les décisions importantes sont consignées sous forme de courtes décisions
+d'architecture (ADR) dans `docs/adr/`, selon le format de Michael Nygard :
+contexte, décision, conséquences. Les ADR sont numérotées et jamais
+supprimées ; une décision qui change fait l'objet d'une nouvelle ADR qui
+remplace l'ancienne.
 
-## Consequences
+## Conséquences
 
-- Each record explains *why*, which the code alone cannot.
-- Reviewing the decisions before a milestone is quick.
-- A record must be written or updated in the same pull request as the change
-  it describes.
+- Chaque ADR explique le *pourquoi*, ce que le code seul ne peut pas faire.
+- Relire les décisions avant un jalon prend peu de temps.
+- Une ADR doit être écrite ou mise à jour dans la même pull request (PR) que
+  le changement qu'elle décrit.

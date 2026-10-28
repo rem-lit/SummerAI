@@ -1,102 +1,113 @@
-# Use case
+# Cas d'usage
 
-> **Status:** draft, to be confirmed before milestone M2. Targets below are
-> goals, not results; measured values will be added as they are produced.
+> **État :** brouillon, à confirmer avant le jalon M2. Les objectifs ci-dessous
+> sont des cibles, pas des résultats ; les valeurs mesurées seront ajoutées au
+> fur et à mesure.
 
-## Summary
+## Résumé
 
-SummerAI is a **private assistant for cyber security compliance and IT
-operations**. It answers questions over two kinds of documents at once:
+SummerAI est un **assistant privé pour la conformité cyber et l'exploitation
+informatique**. Il répond à des questions en s'appuyant sur deux types de
+documents à la fois :
 
-- public guidance from the Australian Signals Directorate (ASD), centred on the
-  **Essential Eight**;
-- an organisation's own internal policies and runbooks, which are confidential
-  and readable only by the teams they concern.
+- les publications de l'ANSSI, en particulier le **guide d'hygiène
+  informatique** et le **référentiel ReCyF** qui décline la directive
+  **NIS 2** ;
+- les politiques et procédures internes d'une organisation, qui sont
+  confidentielles et lisibles seulement par les équipes concernées.
 
-Every answer cites the passages it relies on, and no user ever sees content
-from a document they are not allowed to read.
+Chaque réponse cite les passages sur lesquels elle s'appuie, et aucun
+utilisateur ne voit le contenu d'un document qu'il n'a pas le droit de lire.
 
-## Problem
+## Problème
 
-IT teams in small and medium organisations are expected to align with the
-Essential Eight, and government suppliers with the Information Security Manual
-(ISM). The guidance is precise but long and spread across many publications.
-The organisation's own procedures live somewhere else, and are often
-confidential.
+La directive NIS 2 va soumettre de nombreuses entreprises françaises de taille
+moyenne à des obligations de cybersécurité, souvent pour la première fois. Sa
+transposition en droit français, le projet de loi Résilience, est encore en
+discussion au Parlement en octobre 2026. L'ANSSI publie déjà, en version de
+travail, le référentiel qui détaille les mesures attendues : le ReCyF. Le
+guide d'hygiène informatique reste la base pour les organisations qui ne sont
+pas concernées.
 
-Answering a question such as *"does our backup procedure meet maturity level
-one?"* means reading both sets of documents by hand, every time. Sending
-internal procedures to a public LLM API is not acceptable for many of these
-organisations, which is why the assistant runs on infrastructure the
-organisation controls.
+Ces documents sont précis mais longs. Les procédures de l'organisation sont
+ailleurs, et souvent confidentielles. Répondre à une question comme *« notre
+procédure de sauvegarde respecte-t-elle la mesure 37 du guide d'hygiène ? »*
+oblige à relire les deux à la main, à chaque fois. Envoyer des procédures
+internes à une API de modèle de langage publique n'est pas acceptable pour
+beaucoup de ces organisations : l'assistant tourne donc sur une infrastructure
+qu'elles maîtrisent.
 
-## Users
+## Utilisateurs
 
-The internal documents belong to **Acme Logistics**, a fictional company of
-about 150 people created for this project. Three roles are modelled:
+Les documents internes appartiennent à **Acme Logistique**, une entreprise
+fictive d'environ 150 personnes créée pour ce projet. Trois rôles sont
+modélisés :
 
-| Role | Can read |
+| Rôle | Peut lire |
 |---|---|
-| Staff | Public ASD guidance, internal policies meant for all staff |
-| IT operations | The above, plus runbooks (patching, backup, change management) and the asset inventory |
-| Security | The above, plus the incident response playbook, vulnerability reports and the risk register |
+| Salarié | Les publications de l'ANSSI, les politiques internes destinées à tout le personnel |
+| Exploitation informatique | Le niveau précédent, plus les runbooks (mises à jour, sauvegarde, gestion des changements) et l'inventaire des actifs |
+| Sécurité | Le niveau précédent, plus le plan de réponse aux incidents, les rapports de vulnérabilités et le registre des risques |
 
-These roles drive the access control tests: a staff member must never
-retrieve a runbook, and IT operations must never retrieve the incident
-response playbook.
+Ces rôles pilotent les tests de contrôle d'accès : un salarié ne doit jamais
+obtenir un runbook, et l'exploitation ne doit jamais obtenir le plan de réponse
+aux incidents.
 
-## Data
+## Données
 
-| Corpus | Content | Licence | Stored in the repository |
+| Corpus | Contenu | Licence | Versionné dans le dépôt |
 |---|---|---|---|
-| Public | Essential Eight Maturity Model, Essential Eight explained, selected ISM guidelines and related ASD publications | CC BY 4.0, © Commonwealth of Australia | No. A script downloads each document from a pinned URL and checks its SHA-256 |
-| Internal | 20 to 30 short Markdown documents for Acme Logistics: policies, runbooks, playbook, inventory, risk register. Some are deliberately non-compliant, so gap analysis has something to find | Written for this project, Apache 2.0 | Yes, each file declaring the roles allowed to read it |
-| Adversarial | Documents that contain prompt-injection attempts, used only by the security tests | Written for this project, Apache 2.0 | Yes, separately from the main corpus |
+| Public | Guide d'hygiène informatique de l'ANSSI (version 2.0, septembre 2017, 42 mesures), ReCyF (version de travail 2.5 du 17 mars 2026, 20 objectifs de sécurité), texte de la directive NIS 2 (UE) 2022/2555 | Guide d'hygiène : Licence Ouverte Etalab v1. Directive : réutilisation autorisée avec mention de la source (EUR-Lex). ReCyF : licence non indiquée dans le document | Non. Un script télécharge chaque document depuis une adresse fixe et vérifie son SHA-256 |
+| Interne | 20 à 30 courts documents Markdown pour Acme Logistique : politiques, runbooks, plan de réponse aux incidents, inventaire, registre des risques. Certains sont volontairement non conformes, pour que l'analyse d'écart ait quelque chose à trouver | Écrits pour ce projet, Apache 2.0 | Oui, chaque fichier déclarant les rôles autorisés à le lire |
+| Adverse | Documents contenant des tentatives d'injection de prompt, utilisés seulement par les tests de sécurité | Écrits pour ce projet, Apache 2.0 | Oui, à part du corpus principal |
 
-ASD content is used under its licence, with attribution. Nothing in this
-project suggests that ASD endorses it.
+Les documents publics sont utilisés avec mention de leur source et de leur
+date. Rien dans ce projet ne laisse entendre que l'ANSSI ou l'Union européenne
+le soutiennent. Le ReCyF étant une version de travail, les réponses qui s'y
+appuient le signalent.
 
-## Questions the assistant must handle
+## Questions que l'assistant doit traiter
 
-| Type | Example | What it exercises |
+| Type | Exemple | Ce qui est testé |
 |---|---|---|
-| Guidance lookup | "What does maturity level two require for patching internet-facing applications?" | Retrieval and citations over public documents |
-| Internal lookup | "Who approves an emergency firewall change?" | Retrieval restricted by role |
-| Gap analysis | "Does our backup procedure meet Essential Eight maturity level one?" | Several retrievals, comparison, citations from both corpora; this is where the agent layer is expected to help |
-| Out of scope or forbidden | "What is the firewall admin password?", or a staff member asking about the incident response playbook | Refusal without leaking restricted content, or even its existence |
+| Consultation des référentiels | « Quels objectifs du ReCyF s'appliquent à une entité importante ? » | Recherche et citations dans les documents publics |
+| Consultation interne | « Qui valide une modification urgente du pare-feu ? » | Recherche limitée par le rôle |
+| Analyse d'écart | « Notre procédure de sauvegarde respecte-t-elle la mesure 37 du guide d'hygiène ? » | Plusieurs recherches, comparaison, citations des deux corpus ; c'est là que la couche d'agents doit apporter quelque chose |
+| Hors périmètre ou interdit | « Quel est le mot de passe d'administration du pare-feu ? », ou un salarié qui interroge le plan de réponse aux incidents | Refus sans divulguer le contenu protégé, ni même son existence |
 
-## Success criteria
+## Critères de réussite
 
-| Criterion | Target | Measured |
+| Critère | Cible | Mesuré |
 |---|---|---|
-| Retrieval recall@5 on the golden dataset | ≥ 0.85 | — |
-| Faithfulness of answers to the retrieved context | ≥ 0.90 | — |
-| Citations that support the sentence they are attached to | ≥ 0.90 | — |
-| Gap analysis answers judged correct by hand (20-question subset) | ≥ 80 % | — |
-| Restricted chunks returned to an unauthorised role (leakage suite) | 0 | — |
-| Successful prompt injections in the adversarial suite | 0 | — |
-| End-to-end time to first token, 95th percentile, simple questions | < 3 s | — |
+| Rappel de la recherche à 5 (recall@5) sur le jeu de référence | ≥ 0,85 | — |
+| Fidélité des réponses au contexte retrouvé | ≥ 0,90 | — |
+| Citations qui étayent la phrase à laquelle elles sont attachées | ≥ 0,90 | — |
+| Analyses d'écart jugées correctes à la main (sous-ensemble de 20 questions) | ≥ 80 % | — |
+| Extraits protégés renvoyés à un rôle non autorisé (suite de tests de fuite) | 0 | — |
+| Injections de prompt réussies dans la suite adverse | 0 | — |
+| Délai jusqu'au premier jeton, de bout en bout, 95e centile, questions simples | < 3 s | — |
 
-The first four targets may be revised once a baseline exists; the two zero
-targets are hard requirements.
+Les quatre premières cibles pourront être revues une fois une première mesure
+obtenue ; les deux cibles à zéro sont des exigences strictes.
 
-## Golden dataset
+## Jeu de référence
 
-At least 50 questions, each written and checked by hand, with the expected
-answer, the documents that support it and the role asking:
+Au moins 50 questions, chacune écrite et vérifiée à la main, avec la réponse
+attendue, les documents qui la justifient et le rôle qui la pose :
 
 | Type | Questions |
 |---|---|
-| Guidance lookup | about 20 |
-| Internal lookup | about 15, spread across the three roles |
-| Gap analysis | about 10 |
-| Out of scope or forbidden | about 5 |
+| Consultation des référentiels | environ 20 |
+| Consultation interne | environ 15, réparties entre les trois rôles |
+| Analyse d'écart | environ 10 |
+| Hors périmètre ou interdit | environ 5 |
 
-The leakage and prompt-injection suites are separate from the golden dataset.
+Les suites de tests de fuite et d'injection de prompt sont séparées du jeu de
+référence.
 
-## Out of scope
+## Hors périmètre
 
-- Certifying compliance: answers support a decision, they are not audit
-  evidence.
-- Real company data.
-- Documents in languages other than English.
+- Certifier la conformité : les réponses aident à décider, elles ne sont pas
+  une preuve d'audit.
+- Des données d'entreprise réelles.
+- Des documents dans une autre langue que le français.

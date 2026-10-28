@@ -1,77 +1,85 @@
-# Changelog
+# Journal des modifications
 
-All notable changes to this project are documented in this file.
+Toutes les modifications notables du projet sont consignées dans ce fichier.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), et le
+projet suit le [versionnement sémantique](https://semver.org/lang/fr/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Non publié]
 
-### Added
+### Ajouté
 
-- English README with project goals, current status and target architecture.
-- v1 roadmap ([`docs/roadmap.md`](docs/roadmap.md)) and architecture document
-  ([`docs/architecture.md`](docs/architecture.md)).
-- Use case: a private assistant for Essential Eight compliance and IT
-  operations, with roles, data, success criteria and golden dataset plan
-  ([`docs/use-case.md`](docs/use-case.md)).
-- Architecture decision records ([`docs/adr/`](docs/adr/)): `llama-server` as
-  the only runtime in v1 (ADR 0006), one LXC container per GPU (ADR 0007),
-  Caddy with mutual TLS as the gateway (ADR 0008), PostgreSQL with pgvector
-  (ADR 0004). ADRs 0002, 0003 and 0005 are kept as superseded.
-- Apache 2.0 licence, security policy, contribution guide and pull request
-  template.
-- CI workflow (Markdown lint, link check, secret scan over the full history),
-  pre-commit hooks and Dependabot updates for GitHub Actions.
-
-- Description of the delegated worker loop used to build the project
-  ([`docs/delegated-loop.md`](docs/delegated-loop.md)), a proposed ADR 0009,
-  and a parallel track in the roadmap.
-- GPU host runbook ([`docs/runbooks/gpu-host.md`](docs/runbooks/gpu-host.md)):
-  pinned kernel, NVIDIA driver with DKMS, one unprivileged container for the
-  RTX 3090, llama.cpp built from a pinned release, the main model served by
-  `llama-server` on loopback with an API key.
-- Host and container configuration files in [`deploy/merlin/`](deploy/merlin/):
-  driver blacklist, persistence and device node units, sandboxed
-  `llama-server` unit.
-- Smoke test for a `llama-server` instance
-  ([`scripts/smoke/llm.sh`](scripts/smoke/llm.sh)): authentication, model
-  alias, chat with separated reasoning, tool call.
-- Power-limit benchmark for one GPU
-  ([`scripts/bench/power-limit.sh`](scripts/bench/power-limit.sh)) with a
-  chart generator, and the first results for the RTX 3090
-  ([`benchmarks/power-limit/`](benchmarks/power-limit/)). A boot unit sets the
-  chosen limit.
-- Retrieval container on the RTX 3060: embedding (`Qwen3-Embedding-0.6B`) and
-  reranking (`Qwen3-Reranker-0.6B`) models, each served by its own
-  `llama-server` instance, with their checksums in
+- README avec les objectifs du projet, son état actuel et l'architecture
+  cible.
+- Feuille de route de la v1 ([`docs/roadmap.md`](docs/roadmap.md)) et document
+  d'architecture ([`docs/architecture.md`](docs/architecture.md)).
+- Cas d'usage avec rôles, données, critères de réussite et plan du jeu de
+  référence ([`docs/use-case.md`](docs/use-case.md)).
+- Décisions d'architecture ([`docs/adr/`](docs/adr/)) : `llama-server` seul
+  moteur d'inférence en v1 (ADR 0006), un conteneur LXC par GPU (ADR 0007),
+  Caddy avec TLS mutuel comme passerelle (ADR 0008), PostgreSQL avec pgvector
+  (ADR 0004). Les ADR 0002, 0003 et 0005 sont conservées comme remplacées.
+- Licence Apache 2.0, politique de sécurité, guide de contribution et modèle
+  de pull request.
+- Workflow de CI (lint Markdown, vérification des liens, recherche de secrets
+  sur tout l'historique), hooks pre-commit et mises à jour Dependabot pour les
+  GitHub Actions.
+- Description de la boucle de travail déléguée utilisée pour construire le
+  projet ([`docs/delegated-loop.md`](docs/delegated-loop.md)), proposition
+  d'ADR 0009, et piste parallèle dans la feuille de route.
+- Runbook de l'hôte GPU ([`docs/runbooks/gpu-host.md`](docs/runbooks/gpu-host.md)) :
+  noyau épinglé, pilote NVIDIA avec DKMS, un conteneur non privilégié par
+  carte, llama.cpp compilé depuis une version épinglée, modèles servis par
+  `llama-server` en local avec une clé d'API.
+- Fichiers de configuration de l'hôte et des conteneurs dans
+  [`deploy/merlin/`](deploy/merlin/) : liste noire des pilotes libres, unités
+  de persistance et des nœuds de périphériques, unité `llama-server` en bac à
+  sable.
+- Smoke test d'une instance `llama-server`
+  ([`scripts/smoke/llm.sh`](scripts/smoke/llm.sh)) : authentification, alias
+  du modèle, réponse avec raisonnement séparé, appel d'outil.
+- Mesure de la limite de puissance d'un GPU
+  ([`scripts/bench/power-limit.sh`](scripts/bench/power-limit.sh)) avec un
+  générateur de graphiques, et les premiers résultats pour la RTX 3090
+  ([`benchmarks/power-limit/`](benchmarks/power-limit/)). Une unité de
+  démarrage applique la limite choisie.
+- Conteneur de recherche sur la RTX 3060 : modèles d'embeddings
+  (`Qwen3-Embedding-0.6B`) et de reranking (`Qwen3-Reranker-0.6B`), chacun
+  servi par sa propre instance `llama-server`, avec leurs empreintes dans
   [`deploy/merlin/llama/models.sha256`](deploy/merlin/llama/models.sha256).
-- Smoke test for the retrieval models
-  ([`scripts/smoke/retrieval.sh`](scripts/smoke/retrieval.sh)): authentication,
-  vector size and norm, similarity, reranking order.
+- Smoke test des modèles de recherche
+  ([`scripts/smoke/retrieval.sh`](scripts/smoke/retrieval.sh)) :
+  authentification, taille et norme des vecteurs, similarité, ordre du
+  reranking.
 
-### Changed
+### Modifié
 
-- `llama-server` runs as a template unit, one instance per model, with the
-  arguments of each instance in `/etc/llama/<instance>.conf`. The unit moved
-  from `deploy/merlin/llm/llama-server.service` to
+- Toute la documentation est en français. Le code, ses commentaires et les
+  messages des scripts restent en anglais.
+- Le cas d'usage de référence devient un assistant de conformité cyber
+  appuyé sur le guide d'hygiène informatique et le référentiel ReCyF de
+  l'ANSSI (directive NIS 2), à la place de l'Essential Eight australien.
+- `llama-server` tourne comme unité modèle, une instance par modèle, avec les
+  arguments de chaque instance dans `/etc/llama/<instance>.conf`. L'unité est
+  passée de `deploy/merlin/llm/llama-server.service` à
   [`deploy/merlin/llama/llama-server@.service`](deploy/merlin/llama/llama-server@.service).
-- The smoke tests share their helpers in
-  [`scripts/smoke/lib.sh`](scripts/smoke/lib.sh), and the LLM smoke test asks
-  in French about the ANSSI hygiene guide and a CVE instead of Essential Eight
-  and the weather.
-- The power-limit benchmark stops and restarts every `llama-server` instance
-  of the container.
-- The original French roadmap is now an English long-term roadmap
-  ([`docs/roadmap-long-term.md`](docs/roadmap-long-term.md)); phases 0 to 5 are
-  re-planned in the v1 roadmap.
-- `IDEAS.md` moved to [`docs/ideas.md`](docs/ideas.md) and translated.
+- Les smoke tests partagent leurs fonctions dans
+  [`scripts/smoke/lib.sh`](scripts/smoke/lib.sh), et celui du modèle de
+  langage pose ses questions en français, sur le guide d'hygiène de l'ANSSI et
+  une CVE.
+- La mesure de limite de puissance arrête et relance toutes les instances
+  `llama-server` du conteneur.
+- La feuille de route d'origine devient la
+  [feuille de route à long terme](docs/roadmap-long-term.md) ; les phases 0 à
+  5 sont replanifiées dans la feuille de route de la v1.
+- `IDEAS.md` est déplacé dans [`docs/ideas.md`](docs/ideas.md).
 
-### Fixed
+### Corrigé
 
-- Duplicated table header in the roadmap's pull request sequence.
+- En-tête de tableau en double dans la séquence des pull requests de la
+  feuille de route.
 
-### Removed
+### Retiré
 
-- Empty `docker-compose.yml` and placeholder `.env.example`. Both come back
-  with the first deployable services.
+- `docker-compose.yml` vide et `.env.example` provisoire. Les deux reviendront
+  avec les premiers services déployables.

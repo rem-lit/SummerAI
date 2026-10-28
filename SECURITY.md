@@ -1,39 +1,43 @@
-# Security Policy
+# Politique de sécurité
 
-SummerAI is a personal project in early development. Security is a core
-design goal (see [`docs/architecture.md`](docs/architecture.md) and, once
-published, `docs/security.md`), and reports are welcome.
+SummerAI est un projet personnel en début de développement. La sécurité est
+un objectif central de la conception (voir
+[`docs/architecture.md`](docs/architecture.md) et, une fois publié,
+`docs/security.md`), et les signalements sont les bienvenus.
 
-## Supported versions
+## Versions prises en charge
 
-There is no stable release yet. Only the `main` branch receives fixes.
+Il n'y a pas encore de version stable. Seule la branche `main` reçoit des
+correctifs.
 
-| Version | Supported |
+| Version | Prise en charge |
 |---|---|
-| `main` | Yes |
-| Anything else | No |
+| `main` | Oui |
+| Toute autre version | Non |
 
-## Reporting a vulnerability
+## Signaler une vulnérabilité
 
-Please **do not open a public issue** for a security problem.
+Merci de **ne pas ouvrir d'issue publique** pour un problème de sécurité.
 
-Use GitHub's private reporting instead: open the repository's **Security** tab,
-then **Report a vulnerability**. Include:
+Utiliser plutôt le signalement privé de vulnérabilité de GitHub : ouvrir
+l'onglet **Security** du dépôt, puis **Report a vulnerability**. Inclure :
 
-- the affected component, file or configuration;
-- steps to reproduce, or a proof of concept;
-- the impact you expect (data exposure, privilege escalation, prompt injection
-  leading to an unintended tool call, and so on).
+- le composant, le fichier ou la configuration concernés ;
+- les étapes pour reproduire, ou une preuve de concept ;
+- l'impact attendu (exposition de données, élévation de privilèges, injection
+  de prompt menant à un appel d'outil non voulu, etc.).
 
-You can expect an acknowledgement within 7 days. Confirmed issues are fixed on
-`main` and credited in the changelog unless you prefer to stay anonymous.
+Vous pouvez attendre un accusé de réception sous 7 jours. Les problèmes
+confirmés sont corrigés sur `main` et crédités dans le journal des
+modifications, sauf si vous préférez rester anonyme.
 
-## Scope
+## Périmètre
 
-In scope: the code, container definitions, infrastructure-as-code and
-documentation in this repository, including prompt-injection and cross-user
-data-leakage issues in the retrieval and agent layers.
+Dans le périmètre : le code, les définitions de conteneurs,
+l'infrastructure as code et la documentation de ce dépôt, y compris les
+problèmes d'injection de prompt et de fuite de données entre utilisateurs dans
+les couches de recherche documentaire et d'agents.
 
-Out of scope: the author's own network and hosts. Do not scan or attack them;
-the infrastructure described in the documentation is not exposed to the
-internet.
+Hors périmètre : le réseau et les hôtes de l'auteur. Ne pas les scanner ni les
+attaquer ; l'infrastructure décrite dans la documentation n'est pas exposée à
+Internet.

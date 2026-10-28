@@ -1,18 +1,19 @@
-# Idea backlog
+# Réserve d'idées
 
-Ideas collected while designing SummerAI. They are **not** commitments; the
-last column says where each one stands relative to the
-[v1 roadmap](roadmap.md) and the [long-term roadmap](roadmap-long-term.md).
+Idées recueillies pendant la conception de SummerAI. Ce ne sont **pas** des
+engagements ; la dernière colonne indique où en est chacune par rapport à la
+[feuille de route v1](roadmap.md) et à la
+[feuille de route à long terme](roadmap-long-term.md).
 
-| Idea | Details | Status |
+| Idée | Détails | Statut |
 |---|---|---|
-| Two-stage generation | A slow first pass builds a highly specialised knowledge base, with fact and consistency checks; a lighter model then answers users on top of it, to reduce the memory needed at query time. | Research, long term |
-| Specialised models | Fine-tuning for narrow domains; chaining several LLMs. | Long term |
-| Dynamic context memory | Promote concepts to a stable context depending on how often they recur in prompts, generations and user answers on a given topic. | Research, long term |
-| Benchmarks per speciality | Compare existing models per domain, for example with RAGAS. | Partly in v1 (evaluation harness, milestone M3) |
-| Server and local editions | A server edition (VPS or on-premises) and a containerised local edition that uses the client's own GPU, both deployed through CI pipelines on push, similar to how n8n is distributed. | v1 provides GPU and CPU-only Compose profiles |
-| Model choice by context | Pick the model according to context and available resources: cloud API, local GPUs, or a hybrid of both. | Cloud variant after v1; a development-time version is the [delegated worker loop](delegated-loop.md) |
-| Several modes | AI assistant, RAG, automation (n8n), agent acting on the machine, project mode (orchestration of several AIs). | v1 covers assistant, RAG and agents with restricted tools; the rest is long term |
-| Peer-to-peer GPU mesh | Pool GPU resources across machines. | Long term (Track C) |
-| Workload questionnaire | Ask users about their expected workload to anticipate deployments. | Long term (Track D) |
-| Rented GPUs | Use a GPU marketplace such as vast.ai for burst capacity. | Long term (Track C) |
+| Génération en deux étapes | Une première passe lente construit une base de connaissances très spécialisée, avec vérification des faits et de la cohérence ; un modèle plus léger répond ensuite aux utilisateurs à partir de cette base, pour réduire la mémoire nécessaire au moment de la requête. | Recherche, long terme |
+| Modèles spécialisés | Fine-tuning pour des domaines restreints ; enchaînement de plusieurs LLM. | Long terme |
+| Mémoire de contexte dynamique | Promouvoir des concepts dans un contexte stable selon leur fréquence dans les prompts, les générations et les réponses des utilisateurs sur un sujet donné. | Recherche, long terme |
+| Mesures par spécialité | Comparer les modèles existants par domaine, par exemple avec RAGAS. | En partie dans la v1 (banc d'évaluation, jalon M3) |
+| Éditions serveur et locale | Une édition serveur (VPS ou sur site) et une édition locale conteneurisée qui utilise le GPU du client, toutes deux déployées par des pipelines CI à chaque push, sur le modèle de la distribution de n8n. | La v1 fournit des profils Compose GPU et CPU seul |
+| Choix du modèle selon le contexte | Choisir le modèle selon le contexte et les ressources disponibles : API cloud, GPU locaux, ou un mélange des deux. | Variante cloud après la v1 ; une version pour le développement est la [boucle de travail déléguée](delegated-loop.md) |
+| Plusieurs modes | Assistant IA, RAG, automatisation (n8n), agent agissant sur la machine, mode projet (orchestration de plusieurs IA). | La v1 couvre l'assistant, le RAG et des agents aux outils restreints ; le reste relève du long terme |
+| Maillage GPU pair à pair | Mettre en commun les ressources GPU de plusieurs machines. | Long terme (axe C) |
+| Questionnaire de charge | Interroger les utilisateurs sur leur charge prévue pour anticiper les déploiements. | Long terme (axe D) |
+| GPU loués | Utiliser une place de marché de GPU comme vast.ai pour absorber les pics de charge. | Long terme (axe C) |

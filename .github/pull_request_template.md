@@ -1,18 +1,18 @@
-## Summary
+## Résumé
 
-<!-- What does this change do, in one or two sentences? -->
+<!-- Que fait ce changement, en une ou deux phrases ? -->
 
-## Why
+## Pourquoi
 
-<!-- Which roadmap milestone or issue does it serve? -->
+<!-- Quel jalon de la feuille de route ou quelle issue sert-il ? -->
 
-## How it was tested
+## Comment il a été testé
 
-<!-- Commands run, evaluation or benchmark results, screenshots. -->
+<!-- Commandes lancées, résultats d'évaluation ou de mesure, captures d'écran. -->
 
-## Checklist
+## Liste de vérification
 
-- [ ] CI passes and `pre-commit run --all-files` is clean
-- [ ] No secrets, credentials or unsanitised infrastructure details
-- [ ] Every number in the docs comes from a script in this repository
-- [ ] Documentation and `CHANGELOG.md` updated
+- [ ] La CI passe et `pre-commit run --all-files` ne signale rien
+- [ ] Aucun secret, identifiant ou détail d'infrastructure non nettoyé
+- [ ] Chaque chiffre de la documentation vient d'un script de ce dépôt
+- [ ] Documentation et `CHANGELOG.md` mis à jour

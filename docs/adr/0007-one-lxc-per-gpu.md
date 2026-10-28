@@ -1,60 +1,67 @@
-# 7. One LXC container per GPU, sharing the host driver
+# 7. Un conteneur LXC par GPU, partageant le pilote de l'hôte
 
-- **Status:** Accepted
-- **Date:** 2026-10-15
-- **Supersedes:** [ADR 0005](0005-gpu-passthrough-vm.md)
+- **Statut :** Acceptée
+- **Date :** 2026-10-15
+- **Remplace :** [ADR 0005](0005-gpu-passthrough-vm.md)
 
-## Context
+## Contexte
 
-- The GPU host (`merlin`) now has two cards: an NVIDIA RTX 3090 (24 GB) and an
-  RTX 3060 (8 GB), both Ampere. It has an Intel Core i5-14400F, without
-  integrated graphics, and 32 GB of RAM.
-- Each card has one role: the 3090 serves the main language model, the 3060
-  serves the embedding and reranking models ([ADR 0006](0006-llama-server-runtime.md)).
-- The model servers are native `llama-server` binaries, not containers.
-- The maintainer has root on the host, so host-level driver and kernel
-  updates are not a blocker.
+- L'hôte GPU (`merlin`) a désormais deux cartes : une NVIDIA RTX 3090 (24 Go)
+  et une RTX 3060 (8 Go), toutes deux Ampere. Il a un Intel Core i5-14400F,
+  sans partie graphique intégrée, et 32 Go de RAM.
+- Chaque carte a un rôle : la 3090 sert le modèle de langage principal, la
+  3060 sert les modèles d'embeddings et de reranking
+  ([ADR 0006](0006-llama-server-runtime.md)).
+- Les serveurs de modèles sont des binaires `llama-server` natifs, pas des
+  conteneurs.
+- Le mainteneur a root sur l'hôte : les mises à jour du pilote et du noyau au
+  niveau de l'hôte ne sont donc pas bloquantes.
 
-ADR 0005 chose PCIe passthrough to one VM. With two cards, that means two VMs,
-each with its memory locked for as long as it runs: 32 GB is not enough for
-both plus the host.
+L'ADR 0005 avait choisi le passthrough PCIe vers une VM. Avec deux cartes,
+cela fait deux VM, chacune avec sa mémoire verrouillée tant qu'elle tourne :
+32 Go ne suffisent pas pour les deux plus l'hôte.
 
-## Decision
+## Décision
 
-- The NVIDIA driver is installed **on the host** from the official `.run`
-  package, with DKMS and the Proxmox kernel headers. The same version is
-  installed in each container with `--no-kernel-module`.
-- **One LXC container per GPU.** Each container only sees the device nodes of
-  its own card, declared with `devN:` entries rather than raw
-  `cgroup2.devices.allow` rules, whose major numbers can change between boots.
-- `llama-server` runs as a native binary under systemd inside each container.
-  There is no Docker inside the containers.
-- The host kernel is pinned to a version validated with both cards. A kernel
-  or driver update is applied only after `dkms status` confirms the module
-  built for the new kernel.
-- The 3090's power limit is set at boot by a systemd `oneshot` unit, at a value
-  chosen with the benchmarks.
+- Le pilote NVIDIA est installé **sur l'hôte** à partir du paquet `.run`
+  officiel, avec DKMS et les en-têtes du noyau Proxmox. La même version est
+  installée dans chaque conteneur avec `--no-kernel-module`.
+- **Un conteneur LXC par GPU.** Chaque conteneur ne voit que les nœuds de
+  périphérique de sa propre carte, déclarés avec des entrées `devN:` plutôt
+  qu'avec des règles `cgroup2.devices.allow` brutes, dont les numéros majeurs
+  peuvent changer d'un démarrage à l'autre.
+- `llama-server` tourne comme binaire natif sous systemd dans chaque
+  conteneur. Il n'y a pas de Docker dans les conteneurs.
+- Le noyau de l'hôte est épinglé sur une version validée avec les deux
+  cartes. Une mise à jour du noyau ou du pilote n'est appliquée qu'après que
+  `dkms status` a confirmé que le module est compilé pour le nouveau noyau.
+- La limite de puissance de la 3090 est fixée au démarrage par une unité
+  systemd `oneshot`, à une valeur choisie avec les mesures.
 
-## Consequences
+## Conséquences
 
-- Memory is shared with the host instead of being locked per VM, so both
-  roles fit in 32 GB.
-- Isolation is weaker than with a VM: the containers share the host kernel,
-  and the NVIDIA kernel driver is part of their attack surface. The
-  containers are unprivileged, expose only their own card, and accept traffic
-  only through the gateway.
-- Driver updates touch the host and both containers at once, and must keep
-  their versions identical. Ansible pins the version in one place.
-- The deployment layout on `merlin` (systemd units) differs from the platform
-  VM (Docker Compose). Ansible covers both.
-- The layout is specific to Proxmox. The cloud variant will use a GPU VM
-  instead; the `llama-server` configuration carries over unchanged.
+- La mémoire est partagée avec l'hôte au lieu d'être verrouillée par VM : les
+  deux rôles tiennent dans 32 Go.
+- L'isolation est plus faible qu'avec une VM : les conteneurs partagent le
+  noyau de l'hôte, et le pilote noyau NVIDIA fait partie de leur surface
+  d'attaque. Les conteneurs sont non privilégiés, n'exposent que leur propre
+  carte et n'acceptent de trafic que via la passerelle.
+- Les mises à jour du pilote touchent l'hôte et les deux conteneurs à la fois,
+  et doivent garder leurs versions identiques. Ansible épingle la version à un
+  seul endroit.
+- L'organisation du déploiement sur `merlin` (unités systemd) diffère de celle
+  de la VM de la plateforme (Docker Compose). Ansible couvre les deux.
+- Cette organisation est propre à Proxmox. La variante cloud utilisera plutôt
+  une VM GPU ; la configuration de `llama-server` se transpose sans
+  changement.
 
-## Alternatives considered
+## Options envisagées
 
-- **PCIe passthrough to one VM per card** (ADR 0005): stronger isolation, but
-  two VMs with locked memory do not fit in 32 GB.
-- **Both cards in one VM**: one VM with all GPU workloads, but most of the
-  host's memory locked and a single point of failure for chat and retrieval.
-- **Docker inside the containers**: possible with nesting, but adds a layer
-  with known GPU runtime workarounds for no benefit with native binaries.
+- **Passthrough PCIe vers une VM par carte** (ADR 0005) : isolation plus
+  forte, mais deux VM à mémoire verrouillée ne tiennent pas dans 32 Go.
+- **Les deux cartes dans une seule VM** : une VM pour toutes les charges GPU,
+  mais l'essentiel de la mémoire de l'hôte verrouillé et un point de
+  défaillance unique pour le chat et la recherche documentaire.
+- **Docker dans les conteneurs** : possible avec l'imbrication (nesting), mais
+  ajoute une couche, avec des contournements connus pour le runtime GPU, sans
+  bénéfice avec des binaires natifs.
